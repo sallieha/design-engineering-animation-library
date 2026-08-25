@@ -1,0 +1,27 @@
+.ax-glow {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.ax-glow__layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+  background: radial-gradient(
+    circle var(--glow-size, 220px) at var(--glow-x, 50%) var(--glow-y, 50%),
+    var(--glow-color, rgba(255, 255, 255, 0.35)),
+    transparent 70%
+  );
+}
+
+.ax-glow:hover .ax-glow__layer {
+  opacity: 1;
+}
+
+.ax-glow__content {
+  position: relative;
+}

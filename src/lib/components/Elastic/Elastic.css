@@ -1,0 +1,6 @@
+.ax-elastic {
+  display: inline-block;
+  transform: scale(var(--elastic-scale, 1));
+  will-change: transform;
+  cursor: pointer;
+}

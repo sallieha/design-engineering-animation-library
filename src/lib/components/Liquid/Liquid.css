@@ -1,0 +1,8 @@
+.ax-liquid {
+  display: inline-block;
+  border-radius: var(--liquid-radius, 16px);
+  transform: scale(var(--liquid-scale, 1));
+  will-change: border-radius, transform;
+  cursor: pointer;
+  overflow: hidden;
+}

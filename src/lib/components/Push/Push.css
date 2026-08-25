@@ -1,0 +1,6 @@
+.ax-push {
+  display: inline-block;
+  transform: translate(var(--push-x, 0), var(--push-y, 0));
+  will-change: transform;
+  cursor: pointer;
+}
