@@ -1,0 +1,159 @@
+/* Anchored to the spiral motif's actual hub, not just the viewport/button-
+   grid center — those aren't the same point. The hub's location was found
+   by taking the centroid of every line's start point in bg-lines-center.svg
+   (~567.58, 434.24 in the frame's own 1109x908 coordinate space), then
+   mapping it through that layer's own transform chain (see index.css's
+   .bg-layer--lines-center: scale(1.0593) around center, then
+   translate(-13px, -3px)) and #bg-frame's own centering:
+
+     left = 50% + ((567.58/1109 - 0.5) * 1.0593) * frameWidth - 13px
+     top  = 50% + ((434.24/908  - 0.5) * 1.0593) * frameHeight - 3px
+
+   frameWidth/frameHeight use the exact same min(100vw, 100vh*1109/908) /
+   min(100vh, 100vw*908/1109) formulas #bg-frame itself uses, so this
+   offset scales proportionally with the frame at any viewport size —
+   "anchored at all times" rather than a fixed-pixel position that would
+   drift off-hub as the window resizes. */
+/* display:flex here previously made .site-menu's own box size itself
+   around BOTH children — button and dropdown — so translate(-50%, -50%)
+   was centering the whole stack (including the always-in-DOM, 220px-wide
+   dropdown) rather than the button alone, landing the visible icon ~50px
+   off the intended hub. Fixed by giving this element no layout influence
+   from its children at all: it's sized exactly to the button (dropdown is
+   positioned absolutely, see below), so this transform now centers
+   precisely on the button. */
+.site-menu {
+  position: fixed;
+  top: calc(50% - 0.023051 * min(100vh, 100vw * 908 / 1109) - 3px);
+  left: calc(50% + 0.012491 * min(100vw, 100vh * 1109 / 908) - 13px);
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+}
+
+/* Dims and blocks the demo page (including the hover-button grid the
+   toggle now sits in the middle of) while the menu is open. Explicit
+   z-index rather than relying on document order — this renders before the
+   page's own routed content in the DOM, which would otherwise paint
+   underneath it by default. pointer-events only enabled while open, so it
+   never blocks interaction with the demo when the menu is closed.
+
+   Radial rather than flat, and centered on the exact same hub-anchor point
+   as .site-menu itself (same calc() formulas) — darkest right behind the
+   button/dropdown, fading out toward the edges, instead of one uniform
+   dimming level everywhere. */
+.site-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: radial-gradient(
+    circle at calc(50% + 0.012491 * min(100vw, 100vh * 1109 / 908) - 13px) calc(50% - 0.023051 * min(100vh, 100vw * 908 / 1109) - 3px),
+    rgba(5, 7, 15, 1) 0%,
+    rgba(5, 7, 15, 0.7) 40%,
+    rgba(5, 7, 15, 0.25) 100%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.site-menu-backdrop[data-open='true'] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Same 32px circle as the small size the raw SVG rendered at, now using
+   the shared `.glass` material (see index.css) — the same spec the
+   hover-button demo uses — instead of the SVG's own baked-in shadow/blur
+   filters. `.glass`'s box-shadow is the tuned, much lighter Figma
+   elevation stack, vs. the raw SVG's heavier 5-layer drop-shadow filter
+   reaching up to 49px of blur. */
+.site-menu__toggle {
+  appearance: none;
+  padding: 0;
+  margin: 0;
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* The three hamburger lines sit 4px apart in the icon's own viewBox — so
+   translating the outer two by ±4 lands them on the middle line's position
+   before rotating ±45deg into an X centered there. transform-box: fill-box
+   scopes rotation to each path's own geometry instead of the whole SVG's
+   viewBox. */
+.site-menu__line {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.3s ease, opacity 0.2s ease;
+}
+
+.site-menu[data-open='true'] .site-menu__line--1 {
+  transform: translateY(4px) rotate(45deg);
+}
+
+.site-menu[data-open='true'] .site-menu__line--2 {
+  opacity: 0;
+}
+
+.site-menu[data-open='true'] .site-menu__line--3 {
+  transform: translateY(-4px) rotate(-45deg);
+}
+
+/* position: absolute (anchored to .site-menu, which is sized to exactly
+   the button now — see the .site-menu comment above) instead of a normal
+   flex child — this is what lets .site-menu's own box stay button-sized
+   regardless of the dropdown's much larger footprint, so the whole-stack
+   centering bug above can't recur. Centered under the button via left:50%
+   + translateX(-50%) since it's no longer inheriting horizontal centering
+   from a flex parent. Always in the DOM (not conditionally rendered) so it
+   can transition open/closed rather than popping — collapsed via opacity/
+   pointer-events, not display:none, when .site-menu isn't [data-open]. */
+.site-menu__dropdown {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 220px;
+  padding: 10px;
+  border-radius: 20px;
+  opacity: 0;
+  transform: translateX(-50%) translateY(-8px) scale(0.96);
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.site-menu[data-open='true'] .site-menu__dropdown {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.site-menu__item {
+  display: block;
+  /* Vertical padding cut 5px top/bottom (10px total) to sit tighter
+     between the two items. */
+  padding: 7px 16px;
+  border-radius: 14px;
+  color: #ffffff;
+  text-decoration: none;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  transition: background-color 0.15s ease;
+}
+
+.site-menu__item:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.site-menu__item--active {
+  color: var(--accent);
+}
