@@ -30,6 +30,107 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+
+/* Letterbox fill: whenever the viewport's aspect ratio doesn't match
+   #bg-frame's fixed 1109:908 (i.e. almost always on a real browser window),
+   the strip outside the frame used to show flat html background-color — a
+   hard, obvious cutoff next to the vivid blue glow. A blurred bleed was
+   tried here first; this replaces it with a mirrored continuation of the
+   exact same base glow image instead, so the seam is genuinely
+   seamless (a reflection matches perfectly at distance 0 from the boundary,
+   unlike a blur which just fades to mush) rather than an approximation.
+
+   Each side spans from the viewport edge to the frame's own edge, using
+   the same `min(100vw, 100vh * 1109/908)` formula #bg-frame uses for its
+   width, so this tracks the frame exactly as the window resizes. When the
+   viewport is taller/narrower than the frame's aspect (gaps would be top/
+   bottom instead of left/right), width collapses to 0 and these render
+   nothing — matching the "left and right gaps" this was asked to fix.
+
+   A hairline of the page's near-black background was showing right at the
+   seam: `background-size: auto 100%` scales the image to its own native
+   87:71 aspect, which stretches it by a very slightly different horizontal
+   factor than #bg-frame does (#bg-frame's own background-size: 100% 100%
+   stretches non-uniformly to fill its 1109:908 box, not the image's native
+   aspect) — that mismatch, compounded with independent sub-pixel rounding
+   between this box's calc() and the frame's own, left a sliver of the box
+   uncovered right where the two touch. Sizing the image here to the exact
+   same computed width as #bg-frame (rather than to its own native aspect)
+   makes both the scale AND the rounding identical to the frame's own edge,
+   so there's no seam left to show through — and since that width is
+   usually much larger than the gap itself, only a slice of one tile is
+   ever visible, so background-repeat doesn't come into it. */
+.bg-gap {
+  position: fixed;
+  top: 0;
+  height: 100vh;
+  width: calc((100vw - min(100vw, 100vh * 1109 / 908)) / 2);
+  background-image: url('/bg-grid.png');
+  background-size: min(100vw, 100vh * 1109 / 908) 100%;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  pointer-events: none;
+}
+
+/* transform: scaleX(-1) mirrors the whole box, including its background —
+   combined with background-position, this puts the exact same edge column
+   of the source image at the seam as #bg-frame shows on its own edge,
+   giving a true reflection rather than a guessed match. Left gap:
+   background-position "left" puts the image's natural left edge (the same
+   column #bg-frame's own left edge shows) at the box's left edge pre-flip;
+   the mirror then carries that column to the box's right edge, which is
+   exactly where it touches the frame. */
+.bg-gap--left {
+  left: 0;
+  background-position: left center;
+  transform: scaleX(-1);
+}
+
+/* Right gap: mirror image of the left case — "right" position puts the
+   image's natural right edge (matching #bg-frame's own right edge) at the
+   box's right edge pre-flip; the mirror carries it to the box's left edge,
+   which touches the frame. */
+.bg-gap--right {
+  right: 0;
+  background-position: right center;
+  transform: scaleX(-1);
+}
+
+/* Same technique as .bg-gap, rotated 90°: fills the top/bottom letterbox
+   that appears when the viewport is narrower/taller than the frame's
+   1109:908 aspect (the case .bg-gap's width collapses to 0 for). Height
+   uses #bg-frame's own height formula, and the image is sized to the
+   frame's own exact computed height rather than the image's native aspect,
+   for the same reason .bg-gap sizes to the frame's width: identical scale
+   and rounding all the way to the seam, so there's nothing to show through. */
+.bg-gap-v {
+  position: fixed;
+  left: 0;
+  width: 100vw;
+  height: calc((100vh - min(100vh, 100vw * 908 / 1109)) / 2);
+  background-image: url('/bg-grid.png');
+  background-size: 100% min(100vh, 100vw * 908 / 1109);
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  pointer-events: none;
+}
+
+.bg-gap-v--top {
+  top: 0;
+  background-position: center top;
+  transform: scaleY(-1);
+}
+
+.bg-gap-v--bottom {
+  bottom: 0;
+  background-position: center bottom;
+  transform: scaleY(-1);
 }
 
 /* A real, dedicated element (not a pseudo-element on html/body) so
