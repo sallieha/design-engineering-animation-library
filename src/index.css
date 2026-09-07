@@ -66,7 +66,19 @@ body {
   position: fixed;
   top: 0;
   height: 100vh;
-  width: calc((100vw - min(100vw, 100vh * 1109 / 908)) / 2);
+  /* --gap-base is 0 exactly whenever this axis isn't the letterboxed one
+     (frame is width-bound, i.e. the top/bottom-gap scenario) — width must
+     collapse fully to 0 then, not just get small, or this box paints a
+     stray sliver across the full viewport height on top of the top/bottom
+     gaps' own correctly-mirrored content (this exact bug happened in the
+     other direction: a flat "+ 3px" here doesn't go to 0 when --gap-base
+     is 0, so a 3px-wide bar was always present and showing through
+     wherever #bg-frame itself doesn't cover it). min(3px, var(--gap-base)
+     * 10000) is 0 when --gap-base is 0 and 3px for any other positive
+     value, so the overlap past the seam (see the comment above) only
+     applies when there's an actual gap to overlap into. */
+  --gap-base: calc((100vw - min(100vw, 100vh * 1109 / 908)) / 2);
+  width: calc(var(--gap-base) + min(3px, var(--gap-base) * 10000));
   background-image: url('/bg-grid.png');
   background-size: min(100vw, 100vh * 1109 / 908) 100%;
   background-repeat: no-repeat;
@@ -100,6 +112,39 @@ body {
   transform: scaleX(-1);
 }
 
+/* Mirrored red-line layers, dimmed so they read as a fading echo rather
+   than a hard duplicate. A ::after (not a second real background-image on
+   .bg-gap itself) so it can carry its own `opacity` independently of the
+   full-strength glow underneath — `transform` isn't set here since a
+   transform on the parent already carries its whole rendered subtree
+   (including generated content) along with it, so this inherits the
+   parent's scaleX(-1) mirror for free. Only the corner-ray layer whose own
+   edge is the one touching the frame is mirrored here (top-left for the
+   left gap, top-right for the right) — the vertical-hairline and center-
+   motif layers don't reach the frame's left/right edges at all (vertical
+   is centered and narrower than the frame; the motif is a CSS-transformed
+   layer whose offset doesn't reduce to a simple edge reflection), so
+   there'd be nothing of theirs to mirror here anyway. */
+.bg-gap--left::after,
+.bg-gap--right::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-size: min(100vw, 100vh * 1109 / 908) 100%;
+  background-repeat: no-repeat;
+  opacity: 0.55;
+}
+
+.bg-gap--left::after {
+  background-image: url('/bg-lines-top-left.svg?v=8');
+  background-position: left center;
+}
+
+.bg-gap--right::after {
+  background-image: url('/bg-lines-top-right.svg?v=8');
+  background-position: right center;
+}
+
 /* Same technique as .bg-gap, rotated 90°: fills the top/bottom letterbox
    that appears when the viewport is narrower/taller than the frame's
    1109:908 aspect (the case .bg-gap's width collapses to 0 for). Height
@@ -111,7 +156,24 @@ body {
   position: fixed;
   left: 0;
   width: 100vw;
-  height: calc((100vh - min(100vh, 100vw * 908 / 1109)) / 2);
+  /* --gap-base is 0 exactly whenever this axis isn't the letterboxed one
+     (frame is height-bound, i.e. the left/right-gap scenario) — height
+     must collapse fully to 0 then, not just get small, or this box paints
+     a stray sliver across the full viewport width on top of the left/
+     right gaps' own correctly-mirrored content. That's exactly what a
+     flat "+ 3px" here caused: it doesn't go to 0 when --gap-base is 0, so
+     a 3px bar was always present, showing through wherever #bg-frame
+     itself doesn't horizontally cover it (i.e. over .bg-gap--left/right,
+     which sit outside the frame's own narrower width in that scenario).
+     min(3px, var(--gap-base) * 10000) is 0 when --gap-base is 0 and 3px
+     for any other positive value, so the overlap-past-the-seam (added
+     because a visible hairline was showing right at this seam even with
+     every layer here individually toggled off one at a time, pointing to
+     a genuine sub-pixel rendering edge case rather than a coverage gap in
+     any one layer) only applies when there's an actual gap to overlap
+     into. */
+  --gap-base: calc((100vh - min(100vh, 100vw * 908 / 1109)) / 2);
+  height: calc(var(--gap-base) + min(3px, var(--gap-base) * 10000));
   background-image: url('/bg-grid.png');
   background-size: 100% min(100vh, 100vw * 908 / 1109);
   background-repeat: no-repeat;
@@ -131,6 +193,43 @@ body {
   bottom: 0;
   background-position: center bottom;
   transform: scaleY(-1);
+}
+
+/* Mirrored red-line layers for the top/bottom gaps, dimmed the same way as
+   the left/right gaps' ::after (see .bg-gap--left::after above for the
+   full reasoning). Vertical.svg is sized to native-aspect (792:908) at the
+   frame's own computed height — not the gap's own small height — so it
+   matches the scale it renders at inside the frame, matching how the base
+   glow was sized in .bg-gap-v itself. The top corner-ray layers (which
+   span the frame's full width at 100% 100%, same as the base glow) touch
+   the frame's top edge and are mirrored there too; they're specifically
+   "top" rays, so unlike vertical.svg they aren't included for the bottom
+   gap since they don't reach that edge with meaningful content. */
+.bg-gap-v--top::after,
+.bg-gap-v--bottom::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  opacity: 0.55;
+}
+
+.bg-gap-v--top::after {
+  background-image:
+    url('/bg-lines-vertical.svg?v=8'),
+    url('/bg-lines-top-left.svg?v=8'),
+    url('/bg-lines-top-right.svg?v=8');
+  background-size:
+    calc(min(100vh, 100vw * 908 / 1109) * 792 / 908) min(100vh, 100vw * 908 / 1109),
+    100% min(100vh, 100vw * 908 / 1109),
+    100% min(100vh, 100vw * 908 / 1109);
+  background-position: center top, center top, center top;
+}
+
+.bg-gap-v--bottom::after {
+  background-image: url('/bg-lines-vertical.svg?v=8');
+  background-size: calc(min(100vh, 100vw * 908 / 1109) * 792 / 908) min(100vh, 100vw * 908 / 1109);
+  background-position: center bottom;
 }
 
 /* A real, dedicated element (not a pseudo-element on html/body) so
