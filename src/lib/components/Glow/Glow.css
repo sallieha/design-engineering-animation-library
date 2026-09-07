@@ -18,7 +18,8 @@
   );
 }
 
-.ax-glow:hover .ax-glow__layer {
+.ax-glow:hover .ax-glow__layer,
+.ax-glow[data-active='true'] .ax-glow__layer {
   opacity: 1;
 }
 

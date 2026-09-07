@@ -7,6 +7,8 @@ export interface GlowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'childre
   color?: string
   /** Diameter of the glow, in px. */
   size?: number
+  /** Shows the glow programmatically (e.g. a scripted demo loop), centered by default, instead of requiring real pointer hover. */
+  active?: boolean
 }
 
 /**
@@ -20,6 +22,7 @@ export function Glow({
   children,
   color = 'rgba(255, 255, 255, 0.35)',
   size = 220,
+  active,
   style,
   className,
   onPointerMove,
@@ -63,6 +66,7 @@ export function Glow({
     <div
       ref={elementRef}
       className={className ? `ax-glow ${className}` : 'ax-glow'}
+      data-active={active}
       style={{ '--glow-color': color, '--glow-size': `${size}px`, ...style } as React.CSSProperties}
       onPointerMove={handlePointerMove}
       {...rest}

@@ -1,4 +1,4 @@
-import { useCallback, useRef, type HTMLAttributes, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, type HTMLAttributes, type ReactNode } from 'react'
 import { useSpring, type SpringConfig } from '../../physics/useSpring'
 import './Liquid.css'
 
@@ -8,6 +8,8 @@ export interface LiquidProps extends Omit<HTMLAttributes<HTMLDivElement>, 'child
   amplitude?: number
   /** Spring parameters driving the morph. Low damping reads as a liquid wobble/overshoot. */
   spring?: SpringConfig
+  /** Drives the hovered state programmatically (e.g. a scripted demo loop) instead of real pointer events. */
+  active?: boolean
 }
 
 const DEFAULT_SPRING: SpringConfig = { stiffness: 140, damping: 9, mass: 1.4 }
@@ -22,6 +24,7 @@ export function Liquid({
   children,
   amplitude = 22,
   spring = DEFAULT_SPRING,
+  active,
   style,
   className,
   ...rest
@@ -48,6 +51,11 @@ export function Liquid({
   )
 
   const { setTarget } = useSpring(spring, applyMorph)
+
+  useEffect(() => {
+    if (active === undefined) return
+    setTarget(active ? { x: 1, y: 0 } : { x: 0, y: 0 })
+  }, [active, setTarget])
 
   return (
     <div

@@ -1,139 +1,134 @@
 .playground {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 64px 24px 96px;
-}
-
-.playground__header {
-  text-align: center;
-  margin-bottom: 56px;
-}
-
-.playground__header h1 {
-  font-size: 2.4rem;
-  margin: 0 0 12px;
-  letter-spacing: -0.02em;
-}
-
-.playground__header p {
-  color: var(--text-dim);
-  margin: 0;
-  font-size: 1.05rem;
+  padding: 24px;
 }
 
 .playground__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(2, max-content);
+  justify-content: center;
+  gap: 46px 42px;
+  transform: translateY(-28px);
 }
 
-.demo-card {
-  background: var(--surface);
-  border: 1px solid var(--surface-border);
-  border-radius: 16px;
-  padding: 32px 24px 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 6px;
+@media (max-width: 640px) {
+  .playground__grid {
+    grid-template-columns: max-content;
+  }
 }
 
-.demo-card__stage {
-  height: 140px;
-  width: 100%;
-  display: flex;
+.hover-button {
+  position: relative;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 12px;
+  width: 159px;
+  height: 71px;
+  border-radius: 40px;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  user-select: none;
 }
 
-.demo-card h2 {
-  margin: 0;
-  font-size: 1.05rem;
+/* Nudges the top row down without touching `transform` — Elastic drives its
+   own hover scale through that property, so a second transform here would
+   silently replace it instead of combining. `top` composes independently. */
+.hover-button--top {
+  top: 12px;
 }
 
-.demo-card p {
-  margin: 0;
-  color: var(--text-dim);
-  font-size: 0.9rem;
-  line-height: 1.5;
+/* Same reasoning as --top: `left` composes independently of `transform`,
+   so this is safe alongside Gravity's physics-driven transform. */
+.hover-button--right {
+  left: -3px;
 }
 
 /* shared demo primitives */
 
 .glass {
   position: relative;
-  color: #f3f5f7;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  background:
-    radial-gradient(130% 150% at 18% 12%, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.16) 26%, rgba(255, 255, 255, 0) 52%),
-    radial-gradient(95% 115% at 78% 92%, rgba(3, 12, 20, 0.95) 0%, rgba(10, 24, 34, 0.55) 45%, rgba(10, 24, 34, 0) 75%),
-    linear-gradient(155deg, #e2e8ec 0%, #aeb9c1 30%, #5c6870 62%, #23282d 100%);
+  color: #ffffff;
+  border: none;
+  background: rgba(255, 255, 255, 0.012);
+  /* saturate() does the "tint" work by intensifying the backdrop's own
+     color rather than laying white on top of it. Blur nudged back up a bit
+     from the near-zero pass — enough to soften the grid behind the text for
+     legibility, without going back to the heavy 10px haze from before. */
+  backdrop-filter: blur(1.75px) saturate(145%);
+  -webkit-backdrop-filter: blur(1.75px) saturate(145%);
+  /* Rectangle layer (1 of 3): two Figma inner-shadow effects —
+     a light top-left highlight and a dimmer bottom-right one, restored to a
+     moderate strength (Figma's raw 50%/24% was too strong once stacked with
+     everything else; near-zero was too weak to read as glass at all). */
+  /* Outer drop shadow is Figma's own 5-layer elevation stack, applied once
+     to the frame that groups all 3 fill layers — replaces the earlier
+     single-shadow approximation with the real recipe. */
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.75),
-    inset 0 -14px 26px rgba(0, 0, 0, 0.4),
-    0 10px 24px rgba(0, 0, 0, 0.5);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+    inset 1.57px 1.57px 1.57px 0 rgba(255, 255, 255, 0.3),
+    inset -1.57px -1.57px 1.57px -0.78px rgba(255, 255, 255, 0.14),
+    0 2.35px 4.7px rgba(0, 0, 0, 0.44),
+    0 7.84px 7.84px rgba(0, 0, 0, 0.15),
+    0 18.03px 10.97px rgba(0, 0, 0, 0.1),
+    0 31.35px 12.54px rgba(0, 0, 0, 0.07),
+    0 49.38px 145px rgba(0, 0, 0, 0.01);
 }
 
-.chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 24px;
-  border-radius: 16px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  user-select: none;
+/* Center-effect layer (2 of 3): Figma's background blur + noise Texture
+   + layer blur, stacked as a clipped pseudo-element. z-index: -1 keeps it
+   under the button's plain-text content while staying above its own
+   background/border — `backdrop-filter` above already makes `.glass` a
+   stacking context, so that negative z-index resolves locally, not behind
+   the whole page. Texture has no native CSS equivalent, so it's approximated
+   with an SVG feTurbulence noise tile, softened by its own Gaussian blur
+   (Figma's Texture "Radius") before the separate CSS layer blur is applied. */
+.glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  border: none;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: rgba(255, 255, 255, 0.0001);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch' result='noise'/><feColorMatrix in='noise' type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.45 0'/><feGaussianBlur stdDeviation='6.27'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 78.37px 78.37px;
+  background-repeat: repeat;
+  backdrop-filter: blur(0.78px);
+  -webkit-backdrop-filter: blur(0.78px);
+  filter: blur(5.49px);
+  /* Heavily blurred semi-transparent noise averages into a broad, near-solid
+     white wash rather than staying grain-like — at this scale it reads as a
+     milky veil over the whole fill rather than texture, so it's cut back
+     further to let the backdrop's actual color read through underneath. */
+  opacity: 0.1;
 }
 
-.chip--round {
-  border-radius: 999px;
-  padding: 16px;
-  width: 56px;
-  height: 56px;
-}
-
-.gravity-field {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.reveal-card {
-  width: 220px;
-  height: 100px;
-  border-radius: 16px;
-  background: var(--surface-border);
-}
-
-.reveal-card__base,
-.reveal-card__overlay {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-}
-
-.reveal-card__base {
-  color: var(--text-dim);
-}
-
-.reveal-card__overlay {
-  font-weight: 600;
-}
-
-.glow-card {
-  width: 220px;
-  height: 100px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
+/* Edge-effect layer (3 of 3): same background-blur + noise-Texture recipe as
+   the center layer, but with a softer internal Texture radius (18.81 vs
+   6.27) and a lighter layer blur (2.35 vs 5.49), so the grain reads finer
+   and less washed-out. Figma applies it to a stroke-only shape rather than
+   the full fill — approximated here with a radial mask that fades the
+   texture out toward the middle, concentrating it at the rim. */
+.glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  border: none;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: rgba(255, 255, 255, 0.0001);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='e'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch' result='noise'/><feColorMatrix in='noise' type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.45 0'/><feGaussianBlur stdDeviation='18.81'/></filter><rect width='100%25' height='100%25' filter='url(%23e)'/></svg>");
+  background-size: 78.37px 78.37px;
+  background-repeat: repeat;
+  backdrop-filter: blur(0.78px);
+  -webkit-backdrop-filter: blur(0.78px);
+  filter: blur(2.35px);
+  opacity: 0.1;
+  mask-image: radial-gradient(ellipse at center, transparent 55%, black 100%);
+  -webkit-mask-image: radial-gradient(ellipse at center, transparent 55%, black 100%);
 }

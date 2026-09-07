@@ -1,12 +1,6 @@
 export { Elastic } from './components/Elastic'
 export type { ElasticProps } from './components/Elastic'
 
-export { Push } from './components/Push'
-export type { PushProps } from './components/Push'
-
-export { Reveal } from './components/Reveal'
-export type { RevealProps } from './components/Reveal'
-
 export { Gravity } from './components/Gravity'
 export type { GravityProps } from './components/Gravity'
 

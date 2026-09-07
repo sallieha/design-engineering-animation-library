@@ -1,4 +1,4 @@
-import { useCallback, useRef, type HTMLAttributes, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, type HTMLAttributes, type ReactNode } from 'react'
 import { useSpring, type SpringConfig } from '../../physics/useSpring'
 import './Elastic.css'
 
@@ -10,6 +10,8 @@ export interface ElasticProps extends Omit<HTMLAttributes<HTMLDivElement>, 'chil
   pressScale?: number
   /** Spring parameters driving the overshoot/settle. */
   spring?: SpringConfig
+  /** Drives the hovered state programmatically (e.g. a scripted demo loop) instead of real pointer events. */
+  active?: boolean
 }
 
 const DEFAULT_SPRING: SpringConfig = { stiffness: 320, damping: 12, mass: 1 }
@@ -25,6 +27,7 @@ export function Elastic({
   scale = 1.12,
   pressScale = 0.94,
   spring = DEFAULT_SPRING,
+  active,
   style,
   className,
   ...rest
@@ -37,6 +40,11 @@ export function Elastic({
   }, [])
 
   const { setTarget } = useSpring(spring, applyScale, { x: 1, y: 0 })
+
+  useEffect(() => {
+    if (active === undefined) return
+    setTarget(active ? { x: scale, y: 0 } : { x: 1, y: 0 })
+  }, [active, scale, setTarget])
 
   return (
     <div

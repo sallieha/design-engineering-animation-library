@@ -1,15 +1,14 @@
 :root {
-  --bg: #0b0b0f;
-  --surface: #17171f;
-  --surface-border: #2a2a35;
+  --bg: #0a0a0c;
+  --surface: rgba(255, 255, 255, 0.035);
+  --surface-border: rgba(255, 255, 255, 0.09);
   --text: #e8e8ee;
-  --text-dim: #8b8b98;
+  --text-dim: #9a9aa4;
   --accent: #7c9fff;
 
   color-scheme: dark;
   font: 16px/1.5 system-ui, 'Segoe UI', Roboto, sans-serif;
   color: var(--text);
-  background: var(--bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -18,6 +17,124 @@
   box-sizing: border-box;
 }
 
+html {
+  min-height: 100%;
+  background-color: #05070f;
+  overscroll-behavior: none;
+}
+
 body {
   margin: 0;
+  min-height: 100vh;
+  overscroll-behavior: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* A real, dedicated element (not a pseudo-element on html/body) so
+   backdrop-filter on the glass buttons — which sit later in paint order —
+   still reads straight through it. Sized to the Figma source's exact
+   1109:908 aspect ratio, scaled up to whichever axis binds first so it
+   always fits fully within the viewport without overflowing either edge. */
+#bg-frame {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: min(100vw, calc(100vh * 1109 / 908));
+  height: min(100vh, calc(100vw * 908 / 1109));
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+  pointer-events: none;
+  background-color: #05070f;
+  background-image: url('/bg-grid.png');
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+/* Decorative corner-ray layers stacked on top of the base image, one per
+   corner. Each stays smooth/vector-crisp (not pixelated like the base
+   image) since they're real gradient strokes, not pixel art. */
+.bg-layer {
+  position: absolute;
+  inset: 0;
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  image-rendering: auto;
+  /* Soft feather for recording-codec blotchiness — a hard-edged hairline is
+     worst-case for video compression, so this softens the edge slightly to
+     compress more gracefully. Tried 0.3px (too subtle) after 0.6px; 0.6px
+     looked better, so back to that (stacked with the hue shift in the line
+     SVGs' colors).
+
+     drop-shadow() adds edge contrast/depth without reintroducing the same
+     subsampling problem: kept tight (3px blur, 1px offset) rather than big
+     and soft — a large diffuse shadow would just be more spread-out
+     saturated color, the exact thing being avoided. Color pushed toward
+     near-black (from an initial deep purple rgba(40,10,60,.2)) — any red
+     in the shadow still carries the same compression penalty, so going
+     genuinely dark/desaturated gives the strongest edge contrast with the
+     least color-compression risk. Opacity raised in steps (20%→26%→38%)
+     for more visible pop, still a tight/low-spread shadow rather than a
+     big soft one. */
+  filter: blur(0.6px) drop-shadow(1px 1px 3px rgba(6, 4, 9, 0.38));
+}
+
+.bg-layer--lines-vertical {
+  /* Cache-busted query string: this is a public/ file (unhashed by Vite),
+     so editing it in place doesn't change its URL and the browser can keep
+     serving an old decode of it across reloads. Bump the version whenever
+     this file's pixels change. */
+  background-image: url('/bg-lines-vertical.svg?v=8');
+  /* Narrower than the frame (792 vs 1109, same height) — scale by height
+     only so the lines stay perfectly vertical instead of skewing. */
+  background-size: auto 100%;
+}
+
+.bg-layer--lines-center {
+  /* Same 1109:908 canvas as the frame, so no scale-axis override needed.
+     Cache-busted query string: this is a public/ file (unhashed by Vite),
+     so editing it in place doesn't change its URL and the browser can keep
+     serving an old decode of it across reloads. Bump the version whenever
+     this file's pixels change. */
+  background-image: url('/bg-lines-center.svg?v=12');
+  opacity: 0.9;
+  /* The 40.8deg clockwise rotation (20deg, +20deg, +10.8deg, -25deg, +25deg,
+     then -10deg) used to live here as a CSS `rotate()` — removed and baked
+     directly into the SVG file's own path/gradient coordinates instead, so
+     only scale/translate remain here.
+
+     That alone didn't fully fix banding on the motif's straight-line
+     strokes though: two of the six lines per repeated frame used a radial
+     gradient with an almost-zero perpendicular scale (0.5, vs 15-62 for the
+     curved lines) — meaning the full bright-to-dark transition happens
+     across less than a pixel's width of the stroke, which rasterizers
+     handle inconsistently at reduced display scale regardless of rotation.
+     Those two per-frame gradients (72 of the file's 216) are now plain
+     linearGradients along each line's own axis instead, with stops
+     mirrored around the midpoint to reproduce the same bright-center,
+     dark-both-ends look a thin radial ellipse was approximating.
+     Scaled to 1.0593 (two 10% bumps to 1.21, down 3% to 1.1737, down 5% to
+     1.115, then down another 5%), nudged to -13px/-3px total (15px left,
+     then 2px right, 2px up, then another 1px up). translate() is listed
+     first so it applies last/outermost — a fixed screen-space shift after
+     scale, rather than being scaled along with everything else. scale()
+     shares the element's default 50% 50% transform-origin, so it stays
+     centered as it shrinks. */
+  transform: translate(-13px, -3px) scale(1.0593);
+}
+
+.bg-layer--lines-top-left {
+  /* Cache-busted (see .bg-layer--lines-vertical above for why). */
+  background-image: url('/bg-lines-top-left.svg?v=8');
+}
+
+.bg-layer--lines-top-right {
+  /* Cache-busted (see .bg-layer--lines-vertical above for why). */
+  background-image: url('/bg-lines-top-right.svg?v=8');
 }

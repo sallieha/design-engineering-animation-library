@@ -10,6 +10,11 @@ export interface GravityProps extends Omit<HTMLAttributes<HTMLDivElement>, 'chil
   pull?: number
   /** Spring parameters driving the pull and the return-to-rest. */
   spring?: SpringConfig
+  /**
+   * Drives the pull programmatically (e.g. a scripted demo loop) instead of
+   * tracking the real pointer — pulls toward a fixed direction when `true`.
+   */
+  active?: boolean
 }
 
 const DEFAULT_SPRING: SpringConfig = { stiffness: 180, damping: 16, mass: 1.2 }
@@ -26,6 +31,7 @@ export function Gravity({
   radius = 120,
   pull = 14,
   spring = DEFAULT_SPRING,
+  active,
   style,
   className,
   ...rest
@@ -43,6 +49,14 @@ export function Gravity({
   const { setTarget } = useSpring(spring, applyOffset)
 
   useEffect(() => {
+    if (active !== undefined) {
+      // Controlled mode: ignore the real pointer, pull toward a fixed
+      // direction so the effect reads clearly without needing a cursor.
+      const angle = Math.PI / 4
+      setTarget(active ? { x: pull * Math.cos(angle), y: pull * Math.sin(angle) } : { x: 0, y: 0 })
+      return
+    }
+
     function handlePointerMove(event: PointerEvent) {
       const rect = elementRef.current?.getBoundingClientRect()
       if (!rect) return
@@ -71,7 +85,7 @@ export function Gravity({
 
     document.addEventListener('pointermove', handlePointerMove)
     return () => document.removeEventListener('pointermove', handlePointerMove)
-  }, [radius, pull, setTarget])
+  }, [active, radius, pull, setTarget])
 
   return (
     <div

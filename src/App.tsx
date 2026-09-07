@@ -1,61 +1,56 @@
-import type { ReactNode } from 'react'
-import { Elastic, Glow, Gravity, Liquid, Push, Reveal } from './lib'
+import { useEffect, useState } from 'react'
+import { Elastic, Glow, Gravity, Liquid } from './lib'
 import './App.css'
 
-interface DemoProps {
-  name: string
-  description: string
-  children: ReactNode
-}
+/**
+ * Alternates a boolean on a slow, asymmetric loop (settle-in slower than
+ * release) so every hover state can be demoed on camera without a real
+ * cursor — e.g. for a recorded walkthrough.
+ */
+function useAutoPlay(onMs = 1600, offMs = 1000, startDelayMs = 500) {
+  const [active, setActive] = useState(false)
 
-function Demo({ name, description, children }: DemoProps) {
-  return (
-    <section className="demo-card">
-      <div className="demo-card__stage">{children}</div>
-      <h2>{name}</h2>
-      <p>{description}</p>
-    </section>
-  )
+  useEffect(() => {
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout>
+
+    function tick(next: boolean) {
+      if (cancelled) return
+      setActive(next)
+      timer = setTimeout(() => tick(!next), next ? onMs : offMs)
+    }
+
+    timer = setTimeout(() => tick(true), startDelayMs)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [onMs, offMs, startDelayMs])
+
+  return active
 }
 
 function App() {
+  const active = useAutoPlay()
+
   return (
     <div className="playground">
-      <header className="playground__header">
-        <h1>Animation Design Engineering</h1>
-        <p>Six hover states, built as real reusable components — not just named CSS classes.</p>
-      </header>
-
       <div className="playground__grid">
-        <Demo name="Elastic" description="Mass-spring overshoot on scale. Re-hovering mid-settle inherits velocity.">
-          <Elastic className="chip glass">Hover me</Elastic>
-        </Demo>
+        <Elastic className="hover-button hover-button--top glass" scale={1.03} active={active}>
+          Elastic
+        </Elastic>
 
-        <Demo name="Push" description="Content recoils away from the cursor, force falling off with distance.">
-          <Push className="chip glass">Get close</Push>
-        </Demo>
+        <Glow className="hover-button hover-button--top hover-button--right glass" color="rgba(124,159,255,.4)" active={active}>
+          Glow
+        </Glow>
 
-        <Demo name="Reveal" description="Overlay wipes in from whichever edge the cursor actually entered from.">
-          <Reveal className="reveal-card" overlay={<div className="reveal-card__overlay glass">Revealed</div>}>
-            <div className="reveal-card__base">Approach from any side</div>
-          </Reveal>
-        </Demo>
+        <Liquid className="hover-button glass" active={active}>
+          Liquid
+        </Liquid>
 
-        <Demo name="Gravity" description="A magnetic well — the element is pulled toward the cursor before it's even hovered.">
-          <div className="gravity-field">
-            <Gravity className="chip glass chip--round">Pull</Gravity>
-          </div>
-        </Demo>
-
-        <Demo name="Glow" description="A radial highlight tracks the cursor, rAF-throttled to one style write per frame.">
-          <Glow className="glow-card glass" color="rgba(124, 159, 255, 0.4)">
-            <span>Move around</span>
-          </Glow>
-        </Demo>
-
-        <Demo name="Liquid" description="Border-radius corners spring independently out of phase — an organic wobble, not a uniform scale.">
-          <Liquid className="chip glass">Squish</Liquid>
-        </Demo>
+        <Gravity className="hover-button hover-button--right glass" pull={6} active={active}>
+          Gravity
+        </Gravity>
       </div>
     </div>
   )
