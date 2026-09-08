@@ -11,9 +11,10 @@
  */
 function CodeIcon() {
   return (
-    <svg width="19" height="16" viewBox="0 1.33325 20.168 17.33335" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="20" height="16" viewBox="0 1.33325 21.168 17.33335" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M5.75 5.41675L0.75 10.5968L5.75 15.4167" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M14.418 5.41675L19.418 10.5968L14.418 15.4167" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Right chevron nudged 1px further right (was 14.418/19.418/14.418) — viewBox widened by the same 1px to give it room instead of clipping. */}
+      <path d="M15.418 5.41675L20.418 10.5968L15.418 15.4167" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M11.1925 2.08325L9.20508 17.9166" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   )
