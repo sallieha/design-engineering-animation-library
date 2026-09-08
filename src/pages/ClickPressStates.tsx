@@ -11,21 +11,21 @@ function ClickPressStates() {
   return (
     <div className="playground">
       <div className="playground__stack">
+        <Snap className="press-button glass" overshoot={0.08}>
+          Snap
+        </Snap>
+
         <Ripple className="press-button glass" origin="cursor" color="rgba(124,159,255,.5)">
           Ripple
         </Ripple>
-
-        <Pulse className="press-button glass" color="rgba(124,159,255,.5)">
-          Pulse
-        </Pulse>
 
         <Depress className="press-button glass" scale={0.94}>
           Depress
         </Depress>
 
-        <Snap className="press-button glass" overshoot={0.08}>
-          Snap
-        </Snap>
+        <Pulse className="press-button glass" color="rgba(124,159,255,.5)">
+          Pulse
+        </Pulse>
       </div>
     </div>
   )
