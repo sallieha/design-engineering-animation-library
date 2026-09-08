@@ -9,6 +9,7 @@
   flex-direction: column;
   align-items: center;
   gap: 22px;
+  transform: translateY(-15px);
 }
 
 .press-button {
