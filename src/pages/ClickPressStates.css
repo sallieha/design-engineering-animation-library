@@ -9,19 +9,11 @@
   align-items: center;
   gap: 8px;
   text-align: center;
-  /* Was justify-content: center, which put this text at the viewport's
-     center — close enough to SiteMenu's hub-anchored position (see
-     SiteMenu.css) to overlap it. Now sits above the icon instead:
-     justify-content: flex-end packs this content against the bottom of
-     the flex box, and padding-bottom pushes that bottom edge up to sit
-     just above the icon — using the same hub-anchor Y formula (mirrored:
-     distance from the viewport's *bottom* up to the hub, plus clearance)
-     rather than a fixed pixel guess, so it stays clear of the icon at any
-     viewport size. 50vh, not 50% — percentages on padding-top/bottom
-     resolve against the containing block's WIDTH regardless of which axis
-     they visually affect (a classic CSS trap). */
-  justify-content: flex-end;
-  padding-bottom: calc(50vh + 0.023051 * min(100vh, 100vw * 908 / 1109) + 3px + 60px);
+  /* Simple viewport centering — this was pushed off-center at one point to
+     avoid SiteMenu's icon, back when the icon sat at the button-grid's
+     center. Reverted along with the icon moving back to a fixed top-center
+     position (see SiteMenu.css), where it's well clear of centered text. */
+  justify-content: center;
 }
 
 .coming-soon__title {

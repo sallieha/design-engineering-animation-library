@@ -1,52 +1,34 @@
-/* Anchored to the spiral motif's actual hub, not just the viewport/button-
-   grid center — those aren't the same point. The hub's location was found
-   by taking the centroid of every line's start point in bg-lines-center.svg
-   (~567.58, 434.24 in the frame's own 1109x908 coordinate space), then
-   mapping it through that layer's own transform chain (see index.css's
-   .bg-layer--lines-center: scale(1.0593) around center, then
-   translate(-13px, -3px)) and #bg-frame's own centering:
-
-     left = 50% + ((567.58/1109 - 0.5) * 1.0593) * frameWidth - 13px
-     top  = 50% + ((434.24/908  - 0.5) * 1.0593) * frameHeight - 3px
-
-   frameWidth/frameHeight use the exact same min(100vw, 100vh*1109/908) /
-   min(100vh, 100vw*908/1109) formulas #bg-frame itself uses, so this
-   offset scales proportionally with the frame at any viewport size —
-   "anchored at all times" rather than a fixed-pixel position that would
-   drift off-hub as the window resizes. */
-/* display:flex here previously made .site-menu's own box size itself
-   around BOTH children — button and dropdown — so translate(-50%, -50%)
-   was centering the whole stack (including the always-in-DOM, 220px-wide
-   dropdown) rather than the button alone, landing the visible icon ~50px
-   off the intended hub. Fixed by giving this element no layout influence
-   from its children at all: it's sized exactly to the button (dropdown is
-   positioned absolutely, see below), so this transform now centers
-   precisely on the button. */
+/* Back to a fixed top-center position (was anchored to the spiral motif's
+   hub for a while — that math is preserved in git history if it's wanted
+   again, e.g. in HoverStates.css's mobile layout or ClickPressStates.css's
+   text placement, both of which were built around the icon sitting at the
+   button-grid's center and haven't been reverted here). .site-menu itself
+   has no layout influence from its children (dropdown is position:absolute,
+   not a flex child) — see .site-menu__dropdown below — so this position
+   lands exactly on the button regardless. */
 .site-menu {
   position: fixed;
-  top: calc(50% - 0.023051 * min(100vh, 100vw * 908 / 1109) - 3px);
-  left: calc(50% + 0.012491 * min(100vw, 100vh * 1109 / 908) - 13px);
-  transform: translate(-50%, -50%);
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 1000;
 }
 
-/* Dims and blocks the demo page (including the hover-button grid the
-   toggle now sits in the middle of) while the menu is open. Explicit
-   z-index rather than relying on document order — this renders before the
-   page's own routed content in the DOM, which would otherwise paint
-   underneath it by default. pointer-events only enabled while open, so it
-   never blocks interaction with the demo when the menu is closed.
+/* Dims and blocks the demo page while the menu is open. Explicit z-index
+   rather than relying on document order — this renders before the page's
+   own routed content in the DOM, which would otherwise paint underneath it
+   by default. pointer-events only enabled while open, so it never blocks
+   interaction with the demo when the menu is closed.
 
-   Radial rather than flat, and centered on the exact same hub-anchor point
-   as .site-menu itself (same calc() formulas) — darkest right behind the
-   button/dropdown, fading out toward the edges, instead of one uniform
-   dimming level everywhere. */
+   Radial rather than flat, centered on the same top-center point as
+   .site-menu itself — darkest right behind the button/dropdown, fading out
+   toward the edges/bottom of the page. */
 .site-menu-backdrop {
   position: fixed;
   inset: 0;
   z-index: 999;
   background: radial-gradient(
-    circle at calc(50% + 0.012491 * min(100vw, 100vh * 1109 / 908) - 13px) calc(50% - 0.023051 * min(100vh, 100vw * 908 / 1109) - 3px),
+    circle at 50% 36px,
     rgba(5, 7, 15, 1) 0%,
     rgba(5, 7, 15, 0.7) 40%,
     rgba(5, 7, 15, 0.25) 100%
