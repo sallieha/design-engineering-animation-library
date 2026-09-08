@@ -1,0 +1,91 @@
+/* Fixed bottom-center, mirroring SiteMenu's fixed top-center position.
+   .code-toggle has no layout influence from its children (panel is
+   position:absolute, not a flex child — see .code-toggle__panel below), so
+   this position lands exactly on the button regardless of panel size. */
+.code-toggle {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+}
+
+/* Dims the page while the code panel is open, same technique as SiteMenu's
+   backdrop but anchored to this button's bottom-center point instead. */
+.code-toggle-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: radial-gradient(
+    circle at 50% calc(100% - 36px),
+    rgba(5, 7, 15, 1) 0%,
+    rgba(5, 7, 15, 0.7) 40%,
+    rgba(5, 7, 15, 0.25) 100%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.code-toggle-backdrop[data-open='true'] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Same 32px glass circle as SiteMenu's toggle. */
+.code-toggle__button {
+  appearance: none;
+  padding: 0;
+  margin: 0;
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Opens upward (bottom: 100%) instead of downward — this button sits near
+   the bottom of the viewport, so a downward panel would run off-screen. */
+.code-toggle__panel {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  margin-bottom: 12px;
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 18px 20px;
+  border-radius: 20px;
+  opacity: 0;
+  transform: translateX(-50%) translateY(8px) scale(0.96);
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.code-toggle[data-open='true'] .code-toggle__panel {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.code-toggle__code {
+  margin: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  font-family: 'SFMono-Regular', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #ffffff;
+  white-space: pre;
+}
+
+@media (max-width: 640px) {
+  .code-toggle {
+    bottom: 16px;
+  }
+
+  .code-toggle__code {
+    font-size: 12px;
+  }
+}
