@@ -12,7 +12,11 @@ export interface DepressProps extends Omit<HTMLAttributes<HTMLDivElement>, 'chil
   active?: boolean
 }
 
-const DEFAULT_SPRING: SpringConfig = { stiffness: 480, damping: 24, mass: 1 }
+// Lower stiffness + damping near critical (damping ratio ≈0.85) reads as a
+// smooth ease in both directions rather than a snap — the original
+// {480, 24} pairing settled in well under 200ms, abrupt enough that going
+// back to resting size looked like a hard cut rather than a release.
+const DEFAULT_SPRING: SpringConfig = { stiffness: 200, damping: 24, mass: 1 }
 
 /**
  * Compresses toward `scale` for as long as the element is pressed, then

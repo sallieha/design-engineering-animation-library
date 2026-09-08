@@ -14,23 +14,27 @@ export interface SnapProps extends Omit<HTMLAttributes<HTMLDivElement>, 'childre
   active?: boolean
 }
 
-// Stiff and well-damped so the press itself reads as an immediate, sharp
-// state change rather than a smooth glide — the opposite feel from
-// Elastic/Depress, which are tuned to be felt settling in.
-const DEFAULT_SPRING: SpringConfig = { stiffness: 480, damping: 30, mass: 1 }
+// Softer than the original {480, 30} pairing — that settled in well under
+// 200ms in both directions, which read as an abrupt cut rather than a
+// state change with any give to it. Damping ratio here (~0.68) still keeps
+// enough snap for the press to read as immediate-ish, while easing both
+// legs instead of hard-stopping.
+const DEFAULT_SPRING: SpringConfig = { stiffness: 260, damping: 22, mass: 1 }
 
-// How long the overshoot leg is held before pulling back to rest — matched
-// to DEFAULT_SPRING's own settle time by feel, not derived analytically.
-const BOUNCE_HOLD_MS = 90
+// How long the overshoot leg is held before retargeting to rest. Timed to
+// land close to DEFAULT_SPRING's own peak-overshoot point (where velocity
+// is near zero) rather than mid-swing, so the retarget doesn't introduce a
+// visible kink in the motion — an earlier value here caught the spring
+// while it still had real velocity, which is what made the pull-back to
+// rest look like a hard cut.
+const BOUNCE_HOLD_MS = 250
 
 /**
- * A sharp, immediate compress on press (no visible overshoot), followed by
- * a manufactured two-stage release: the target jumps past resting scale by
- * `overshoot` first, then pulls back to rest a beat later. A single spring
- * target can't produce a bounce on its own once it's already sitting still
- * at the press target, so this gives it a real (if short-lived)
- * intermediate target instead of relying on underdamped oscillation, which
- * would also soften the press itself.
+ * An eased compress on press, followed by a manufactured two-stage
+ * release: the target jumps past resting scale by `overshoot` first, then
+ * pulls back to rest a beat later. A single spring target can't produce a
+ * bounce on its own once it's already sitting still at the press target,
+ * so this gives it a real (if short-lived) intermediate target instead.
  */
 export function Snap({
   children,
