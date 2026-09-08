@@ -1,0 +1,27 @@
+.coming-soon {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  justify-content: center;
+}
+
+.coming-soon__title {
+  margin: 0;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 28px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.coming-soon__subtitle {
+  margin: 0;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  color: var(--text-dim);
+}
