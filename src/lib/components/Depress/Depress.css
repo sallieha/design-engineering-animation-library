@@ -1,0 +1,6 @@
+.ax-depress {
+  display: inline-block;
+  transform: scale(var(--depress-scale, 1));
+  will-change: transform;
+  cursor: pointer;
+}

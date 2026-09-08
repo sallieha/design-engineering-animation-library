@@ -1,34 +1,44 @@
-.coming-soon {
-  /* position: relative (not static) so this paints above #bg-frame and the
-     letterbox gap-fills — all `position: fixed` — regardless of DOM order.
-     Plain static content always loses to positioned siblings here. */
-  position: relative;
-  min-height: 100vh;
+.playground {
+  padding: 24px;
+}
+
+/* Single vertical stack, unlike HoverStates' 2x2 grid — same button spec,
+   just one column since there's no pairing logic to preserve here. */
+.playground__stack {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  text-align: center;
-  /* Simple viewport centering — this was pushed off-center at one point to
-     avoid SiteMenu's icon, back when the icon sat at the button-grid's
-     center. Reverted along with the icon moving back to a fixed top-center
-     position (see SiteMenu.css), where it's well clear of centered text. */
-  justify-content: center;
+  gap: 22px;
 }
 
-.coming-soon__title {
-  margin: 0;
+.press-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 159px;
+  height: 71px;
+  border-radius: 40px;
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 28px;
+  font-size: 20px;
   font-weight: 400;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: #ffffff;
+  user-select: none;
 }
 
-.coming-soon__subtitle {
-  margin: 0;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 15px;
-  color: var(--text-dim);
+@media (max-width: 640px) {
+  .playground {
+    padding: 16px;
+  }
+
+  .playground__stack {
+    gap: 16px;
+  }
+
+  .press-button {
+    width: 120px;
+    height: 54px;
+    font-size: 15px;
+  }
 }

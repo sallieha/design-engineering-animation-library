@@ -1,0 +1,40 @@
+.ax-ripple {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.ax-ripple__layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.ax-ripple__wave {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--ripple-color, rgba(255, 255, 255, 0.5));
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0.6;
+  animation: ax-ripple-wave var(--ripple-duration, 600ms) ease-out forwards;
+}
+
+@keyframes ax-ripple-wave {
+  from {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.6;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+  }
+}
+
+.ax-ripple__content {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

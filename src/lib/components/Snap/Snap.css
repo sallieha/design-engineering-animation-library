@@ -1,0 +1,6 @@
+.ax-snap {
+  display: inline-block;
+  transform: scale(var(--snap-scale, 1));
+  will-change: transform;
+  cursor: pointer;
+}
