@@ -1,0 +1,14 @@
+.ax-morph-path {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ax-morph-path__icon {
+  flex: none;
+}
+
+.ax-morph-path__label {
+  line-height: 1;
+}

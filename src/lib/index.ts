@@ -22,5 +22,14 @@ export type { SnapProps } from './components/Snap'
 export { Pulse } from './components/Pulse'
 export type { PulseProps } from './components/Pulse'
 
+export { MorphContainer } from './components/MorphContainer'
+export type { MorphContainerProps } from './components/MorphContainer'
+
+export { MorphPath } from './components/MorphPath'
+export type { MorphPathProps } from './components/MorphPath'
+
+export { MorphBlob } from './components/MorphBlob'
+export type { MorphBlobProps } from './components/MorphBlob'
+
 export { useSpring } from './physics/useSpring'
 export type { SpringConfig, SpringVector } from './physics/useSpring'

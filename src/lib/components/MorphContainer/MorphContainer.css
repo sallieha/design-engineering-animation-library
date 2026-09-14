@@ -1,0 +1,84 @@
+.ax-morph-container {
+  cursor: pointer;
+  transition: opacity 0.05s linear;
+}
+
+/* The overlay starts pixel-identical to this trigger's own rect, so hiding
+   it the instant the overlay mounts (and revealing it the instant the
+   overlay unmounts back at that same rect) causes no visible pop — see
+   MorphContainer.tsx for the full reasoning. */
+.ax-morph-container[data-hidden='true'] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ax-morph-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1199;
+  background: rgba(5, 7, 15, 0.6);
+  opacity: 0;
+  cursor: pointer;
+}
+
+.ax-morph-overlay {
+  /* This alone isn't load-bearing — the consumer's own className (merged
+     onto this element for visual parity with the pill) can carry its own
+     `position` at equal specificity and win on source order. The real
+     source of truth is the inline `position: 'fixed'` set in
+     MorphContainer.tsx, which nothing can override. */
+  position: fixed;
+  z-index: 1200;
+  overflow: hidden;
+  cursor: pointer;
+  /* top/left/width/height/border-radius are driven per-frame from JS (see
+     applyT in MorphContainer.tsx) — this is only the initial paint before
+     the first spring tick lands. */
+}
+
+.ax-morph-overlay__pill-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.ax-morph-overlay__panel-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Higher specificity than the consumer's own single-class button styling
+   (reused on the overlay so its resting look matches the pill exactly —
+   see MorphContainer.tsx) so the panel's own typography always wins
+   regardless of stylesheet import order. */
+.ax-morph-overlay .ax-morph-overlay__panel-title {
+  margin: 0;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 19px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: #ffffff;
+}
+
+.ax-morph-overlay .ax-morph-overlay__panel-subtitle {
+  margin: 0;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: rgba(255, 255, 255, 0.6);
+}

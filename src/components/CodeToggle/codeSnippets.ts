@@ -33,7 +33,17 @@ export const CODE_SNIPPETS: Record<string, string> = {
   Pulse
 </Pulse>`,
 
-  '/transition-states': `// Coming soon`,
+  '/transition-states': `<MorphContainer className="morph-button glass">
+  Container
+</MorphContainer>
+
+<MorphPath className="morph-button glass">
+  Path
+</MorphPath>
+
+<MorphBlob className="morph-button glass">
+  Liquid
+</MorphBlob>`,
 }
 
 export const DEFAULT_SNIPPET = '// Coming soon'

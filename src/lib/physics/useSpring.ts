@@ -98,7 +98,24 @@ export function useSpring(
     [tick],
   )
 
+  // Instantly places the value at rest at `next` — no animation, no
+  // intermediate frames. setTarget always drives there via the spring, which
+  // is right for anything the user should see move; this is for resetting
+  // between replays of a one-shot animation (e.g. a liquid-merge cycle that
+  // always plays forward from 0), where animating back down first would show
+  // motion nobody asked to see.
+  const jumpTo = useCallback(
+    (next: SpringVector) => {
+      stop()
+      position.current = { ...next }
+      velocity.current = { x: 0, y: 0 }
+      target.current = { ...next }
+      onFrameRef.current?.(position.current)
+    },
+    [stop],
+  )
+
   useEffect(() => stop, [stop])
 
-  return { setTarget, stop }
+  return { setTarget, stop, jumpTo }
 }

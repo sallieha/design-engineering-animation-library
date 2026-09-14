@@ -1,0 +1,64 @@
+.ax-morph-blob {
+  cursor: pointer;
+}
+
+/* Same seamless-swap technique as MorphContainer: the overlay starts
+   pixel-identical to this trigger's own rect, so hiding it while the
+   overlay is mounted (and revealing it once the overlay unmounts, which
+   only happens once the cycle has settled back at its own "apart" resting
+   look) causes no visible pop. */
+.ax-morph-blob[data-hidden='true'] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ax-morph-blob-overlay {
+  position: fixed;
+  z-index: 1200;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ax-morph-blob-overlay__label {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Matches separation===1 (apart, at rest) so there's no flash before the
+     first JS-driven frame lands — see MorphBlob.tsx. */
+  opacity: 1;
+}
+
+.ax-morph-blob-overlay__blobs {
+  position: absolute;
+  inset: 0;
+}
+
+.ax-morph-blob-overlay__circle {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(124, 159, 255, 0.85));
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  /* Static fallback matching separation===1 (apart) — overridden by an
+     inline `transform` the instant the first spring frame runs. */
+  top: 50%;
+}
+
+.ax-morph-blob-overlay__circle:nth-child(1) {
+  left: 32%;
+  transform: translate(-50%, -50%);
+}
+
+.ax-morph-blob-overlay__circle:nth-child(2) {
+  left: 68%;
+  transform: translate(-50%, -50%);
+}
+
+.ax-morph-blob-overlay__defs {
+  position: absolute;
+  pointer-events: none;
+}

@@ -1,27 +1,49 @@
-.coming-soon {
-  position: relative;
-  min-height: 100vh;
+.playground {
+  padding: 24px;
+}
+
+/* Same vertical-stack layout as ClickPressStates — same button spec, one
+   column. */
+.playground__stack {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  text-align: center;
-  justify-content: center;
+  gap: 22px;
+  transform: translateY(-28px);
 }
 
-.coming-soon__title {
-  margin: 0;
+/* Same footprint as .press-button (ClickPressStates.css) — all three morph
+   demos need to share this exact resting size/shape/radius so the morph
+   technique is the only variable on display. MorphContainer's default
+   `radius` prop (40) matches this border-radius intentionally. */
+.morph-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 159px;
+  height: 71px;
+  border-radius: 40px;
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 28px;
+  font-size: 20px;
   font-weight: 400;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: #ffffff;
+  user-select: none;
 }
 
-.coming-soon__subtitle {
-  margin: 0;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 15px;
-  color: var(--text-dim);
+@media (max-width: 640px) {
+  .playground {
+    padding: 16px;
+  }
+
+  .playground__stack {
+    gap: 16px;
+  }
+
+  .morph-button {
+    width: 120px;
+    height: 54px;
+    font-size: 15px;
+  }
 }
