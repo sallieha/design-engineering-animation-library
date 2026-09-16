@@ -47,6 +47,12 @@
   line-height: 1;
   white-space: nowrap;
   overflow: hidden;
+  /* Without this, flex's own default shrink behavior can additionally
+     squeeze this element whenever the row is tighter than its content —
+     fighting with the max-width applyShapeT already sets every frame to
+     keep it within the button's real remaining space. flex-shrink: 0 makes
+     max-width the only thing controlling its size. */
+  flex-shrink: 0;
   /* Matches the JS-driven values applyShapeT sets every frame during a
      morph (see MorphPath.tsx) — this is only the resting/initial paint,
      same reasoning as .ax-morph-path.morph-button's own width comment. */

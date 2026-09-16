@@ -47,13 +47,13 @@ const DEFAULT_SPRING: SpringConfig = { stiffness: 260, damping: 18, mass: 1 }
 // the icon spring used to be the same spring, which is what caused that.
 const DEFAULT_SHAPE_SPRING: SpringConfig = { stiffness: 260, damping: 34, mass: 1 }
 
-// The label fades AND shrinks to zero width over this leading fraction of
-// the morph, so both hit zero at the same instant — see applyShapeT.
-const LABEL_HIDE_THRESHOLD = 0.25
+// Icon's own fixed footprint, in px — used to compute how much of the
+// button's current width is actually left over for the label.
+const ICON_WIDTH = 20
 
-// Safely larger than the label could ever naturally need, so it's
-// effectively "unconstrained" at rest (shrink=0) — just a ceiling for the
-// max-width tween, not a real cap.
+// A ceiling for the label's own "shrink toward 0 by t=1" curve — safely
+// larger than the label could ever naturally need, so at t=0 it isn't the
+// binding constraint (the real available-space cap below is).
 const LABEL_MAX_WIDTH = 300
 
 function clamp01(value: number) {
@@ -90,13 +90,19 @@ function buildD(from: readonly Point[], to: readonly Point[], t: number) {
  * Height never changes.
  *
  * The label stays mounted the whole time — its opacity, max-width, and
- * margin all tween to 0 together (not a discrete unmount) so it leaves flex
- * flow gradually. An earlier version unmounted it outright once t crossed
- * the hide threshold, which did get the icon to recenter, but the unmount
- * itself was a one-frame layout change React doesn't animate — the icon
- * visibly snapped ~15% of the button's own width sideways at that instant,
- * on both the way in and the way out. Continuous shrink removes the jump
- * entirely: by the time the label is fully faded it also has zero footprint.
+ * margin all tween to 0 together across the *same* full t range the shape
+ * itself uses (not a discrete unmount, and not some faster leading fraction
+ * of t). Two earlier versions each fixed one problem and left another: an
+ * outright unmount at a threshold did get the icon to recenter, but the
+ * unmount itself was a one-frame layout change React doesn't animate — the
+ * icon visibly snapped sideways. Switching that to a continuous tween but
+ * still compressed into an early fraction of t fixed the snap but not the
+ * pacing — the label finished fading well before the button finished
+ * resizing, which read as a rushed, disconnected sub-animation. Tying it to
+ * the same t range the shape uses removes both: the label recedes/returns
+ * in step with the resize, and max-width is additionally capped at the
+ * button's own actual remaining space every frame, so it's never wider
+ * than what's really left even for a single frame.
  *
  * The glyph and the shape are driven by two independent springs, not one —
  * see DEFAULT_SHAPE_SPRING for why sharing a single spring between them
@@ -135,22 +141,35 @@ export function MorphPath({
 
     const el = containerRef.current
     const restRect = restRectRef.current
+    let currentWidth = restRect?.width ?? 0
     if (el && restRect) {
       const circleDiameter = restRect.height
-      el.style.width = `${lerp(restRect.width, circleDiameter, t)}px`
+      currentWidth = lerp(restRect.width, circleDiameter, t)
+      el.style.width = `${currentWidth}px`
       el.style.borderRadius = `${lerp(40, circleDiameter / 2, t)}px`
     }
 
-    // Opacity, max-width, and margin all reach 0 at the same instant — the
-    // label has zero visual presence and zero layout footprint together,
-    // so the icon eases into center rather than snapping there.
-    const shrink = clamp01(t / LABEL_HIDE_THRESHOLD)
+    // Opacity and margin fade across the *entire* t range (not some early
+    // fraction of it), so the label recedes/returns at the same pace as
+    // the button's own resize instead of rushing through its own faster
+    // sub-animation — that pacing mismatch (the label used to fade+collapse
+    // over just the first quarter of t) was what read as a sudden jump on
+    // both ends. max-width is the smaller of that same full-range curve and
+    // the button's own actual remaining space (currentWidth minus the
+    // icon and this margin) — the space-based cap guarantees the label can
+    // never be wider than what's really left, so it can't ever peek past
+    // the button's own edge for a frame; the curve-based cap guarantees it
+    // still reaches exactly 0 at t=1 even though real remaining space
+    // doesn't (a 71px circle still has ~51px "left" after the icon).
     if (labelRef.current) {
-      labelRef.current.style.opacity = String(1 - shrink)
-      labelRef.current.style.maxWidth = `${(1 - shrink) * LABEL_MAX_WIDTH}px`
-      labelRef.current.style.marginLeft = `${(1 - shrink) * 6}px`
+      const marginLeft = lerp(6, 0, t)
+      const shrinkCurve = (1 - t) * LABEL_MAX_WIDTH
+      const available = Math.max(0, currentWidth - ICON_WIDTH - marginLeft)
+      labelRef.current.style.opacity = String(1 - t)
+      labelRef.current.style.marginLeft = `${marginLeft}px`
+      labelRef.current.style.maxWidth = `${Math.min(shrinkCurve, available)}px`
     }
-    morphedRef.current = shrink >= 1
+    morphedRef.current = t >= 0.999
   }, [])
 
   const { setTarget: setIconTarget } = useSpring(spring, applyIconT, { x: 0, y: 0 })
