@@ -1,12 +1,18 @@
 .ax-morph-container {
   cursor: pointer;
-  transition: opacity 0.05s linear;
 }
 
 /* The overlay starts pixel-identical to this trigger's own rect, so hiding
    it the instant the overlay mounts (and revealing it the instant the
    overlay unmounts back at that same rect) causes no visible pop — see
-   MorphContainer.tsx for the full reasoning. */
+   MorphContainer.tsx for the full reasoning. No transition on this
+   opacity flip, deliberately: on open the overlay (fully opaque, at the
+   exact same rect) is already covering the trigger the moment it fades,
+   so a transition there is invisible either way — but on close, the
+   overlay is removed first and the trigger is what's left, so a fade-IN
+   from 0 is now the only thing on screen and reads as a flicker right at
+   the handoff instead of the seamless cut this technique depends on. An
+   instant flip costs nothing on open and fixes it on close. */
 .ax-morph-container[data-hidden='true'] {
   opacity: 0;
   pointer-events: none;
