@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type HTMLAttributes, type ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type HTMLAttributes, type ReactNode } from 'react'
 import { useSpring, type SpringConfig } from '../../physics/useSpring'
 import './MorphPath.css'
 
@@ -314,6 +314,17 @@ export function MorphPath({
       el.style.paddingRight = `${iconPaddingRef.current}px`
     }
   }, [])
+
+  // Without this, the very first paint has no paddingRight at all (it's
+  // otherwise only ever set from inside a real open) — with
+  // `justify-content: flex-end` already active, that first render would
+  // show the label+glyph flush against the right edge until the first
+  // click measures and sets it. useLayoutEffect (not useEffect) so this
+  // runs and paints synchronously before the browser shows the first
+  // frame, rather than flashing flush-right for a frame first.
+  useLayoutEffect(() => {
+    measureRestRect()
+  }, [measureRestRect])
 
   useEffect(() => {
     if (active === undefined) return
