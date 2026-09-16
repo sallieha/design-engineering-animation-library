@@ -3,9 +3,9 @@ import { useSpring, type SpringConfig } from '../../physics/useSpring'
 import './MorphPath.css'
 
 export interface MorphPathProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
-  /** Label shown next to the morphing glyph. */
+  /** Label shown next to the resting glyph — hidden once morphed into the circle. */
   children: ReactNode
-  /** Spring parameters driving the point interpolation. */
+  /** Spring parameters driving the point interpolation and the shape morph. */
   spring?: SpringConfig
   /** Drives the morphed state programmatically instead of a real click. */
   active?: boolean
@@ -34,6 +34,16 @@ const CROSS: [Point, Point, Point, Point] = [
 
 const DEFAULT_SPRING: SpringConfig = { stiffness: 260, damping: 18, mass: 1 }
 
+// The label fades and unmounts over this leading fraction of the morph, so
+// it's already invisible by the time it leaves flex flow — removing it
+// outright (rather than just fading opacity) is what lets the icon recenter
+// into a true circle instead of sitting off-center in a leftover gap.
+const LABEL_HIDE_THRESHOLD = 0.25
+
+function clamp01(value: number) {
+  return Math.min(1, Math.max(0, value))
+}
+
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t
 }
@@ -59,9 +69,21 @@ function buildD(from: readonly Point[], to: readonly Point[], t: number) {
  * underdamped spring (rather than a critically-damped one) lets each arm
  * swing slightly past its target before settling — the "slight easing
  * variation" that keeps this reading as hand-drawn rather than mechanical.
+ *
+ * The button itself morphs alongside the glyph: width and border-radius
+ * interpolate (via the same spring value, driven directly on this element —
+ * no separate overlay is needed since, unlike MorphContainer, this never
+ * leaves its own footprint) from the resting pill down to a circle whose
+ * diameter equals the pill's own height, so it lands on a perfect circle
+ * with no extra sizing to configure. Height never changes.
  */
 export function MorphPath({ children, spring = DEFAULT_SPRING, active, className, style, onClick, ...rest }: MorphPathProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
   const pathRef = useRef<SVGPathElement>(null)
+  const labelRef = useRef<HTMLSpanElement>(null)
+  const restRectRef = useRef<{ width: number; height: number } | null>(null)
+  const labelHiddenRef = useRef(false)
+
   // Local "is it showing the X" state only matters in uncontrolled mode
   // (no `active` prop) — set from the click handler itself, never from the
   // `active`-prop effect below, so that effect only ever calls setTarget
@@ -69,22 +91,57 @@ export function MorphPath({ children, spring = DEFAULT_SPRING, active, className
   // other component's active-prop effect in this library.
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
   const uncontrolledOpenRef = useRef(false)
+  const [labelVisible, setLabelVisible] = useState(true)
 
   const applyT = useCallback((value: { x: number }) => {
-    pathRef.current?.setAttribute('d', buildD(PLUS, CROSS, Math.min(1, Math.max(0, value.x))))
+    const t = clamp01(value.x)
+    pathRef.current?.setAttribute('d', buildD(PLUS, CROSS, t))
+
+    const el = containerRef.current
+    const rest = restRectRef.current
+    if (el && rest) {
+      const circleDiameter = rest.height
+      el.style.width = `${lerp(rest.width, circleDiameter, t)}px`
+      el.style.borderRadius = `${lerp(40, circleDiameter / 2, t)}px`
+    }
+
+    // Fades to 0 opacity right as it crosses the hide threshold, so by the
+    // time it unmounts (removing it from flex flow so the icon can recenter
+    // into a true circle) it's already invisible — no pop.
+    if (labelRef.current) labelRef.current.style.opacity = String(clamp01(1 - t / LABEL_HIDE_THRESHOLD))
+
+    const shouldHide = t >= LABEL_HIDE_THRESHOLD
+    if (shouldHide !== labelHiddenRef.current) {
+      labelHiddenRef.current = shouldHide
+      setLabelVisible(!shouldHide)
+    }
   }, [])
 
   const { setTarget } = useSpring(spring, applyT, { x: 0, y: 0 })
 
+  // Re-measured on every toggle (not just once on mount) so a resize
+  // between plays — e.g. rotating a device, crossing the mobile breakpoint
+  // — still morphs from the pill's actual current size.
+  const measureRestRect = useCallback(() => {
+    const el = containerRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    // Reading the rect mid-morph would capture an already-shrunk width —
+    // only trust a measurement taken while at rest.
+    if (!labelHiddenRef.current) restRectRef.current = { width: rect.width, height: rect.height }
+  }, [])
+
   useEffect(() => {
     if (active === undefined) return
+    if (active) measureRestRect()
     setTarget({ x: active ? 1 : 0, y: 0 })
-  }, [active, setTarget])
+  }, [active, measureRestRect, setTarget])
 
   const isOpen = active === undefined ? uncontrolledOpen : active
 
   return (
     <div
+      ref={containerRef}
       className={className ? `ax-morph-path ${className}` : 'ax-morph-path'}
       style={style}
       onClick={(e) => {
@@ -92,6 +149,7 @@ export function MorphPath({ children, spring = DEFAULT_SPRING, active, className
         if (active !== undefined) return
         const next = !uncontrolledOpenRef.current
         uncontrolledOpenRef.current = next
+        if (next) measureRestRect()
         setUncontrolledOpen(next)
         setTarget({ x: next ? 1 : 0, y: 0 })
       }}
@@ -101,7 +159,11 @@ export function MorphPath({ children, spring = DEFAULT_SPRING, active, className
       <svg className="ax-morph-path__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path ref={pathRef} d={buildD(PLUS, CROSS, 0)} stroke="white" strokeWidth="2" strokeLinecap="round" />
       </svg>
-      <span className="ax-morph-path__label">{children}</span>
+      {labelVisible && (
+        <span ref={labelRef} className="ax-morph-path__label">
+          {children}
+        </span>
+      )}
     </div>
   )
 }

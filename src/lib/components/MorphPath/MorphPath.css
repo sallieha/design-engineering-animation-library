@@ -3,6 +3,10 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  overflow: hidden;
+  /* width/border-radius are driven per-frame from JS (see applyT in
+     MorphPath.tsx) as it morphs from the resting pill to a circle — this
+     is only the initial paint before the first spring tick lands. */
 }
 
 .ax-morph-path__icon {
