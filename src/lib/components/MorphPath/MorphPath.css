@@ -2,6 +2,7 @@
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   /* Tightened from 10px — "Morph Path" is long enough at the shared
      .morph-button font-size that it wraps to two lines otherwise (needs
      ~132px against ~129px available at the default gap). */
@@ -9,7 +10,31 @@
   overflow: hidden;
   /* width/border-radius are driven per-frame from JS (see applyT in
      MorphPath.tsx) as it morphs from the resting pill to a circle — this
-     is only the initial paint before the first spring tick lands. */
+     is only the initial paint before the first spring tick lands. min-width
+     was tried here instead of the compound selector below, to win over the
+     consumer's own className width without needing extra specificity, but
+     min-width is a hard floor on the *used* width regardless of source —
+     it also blocked the JS-driven inline width from ever shrinking past it
+     during the morph, breaking the circle entirely. */
+}
+
+/* Two classes (this one plus the consumer's own, e.g. .morph-button) beats
+   .morph-button's single-class width:159px regardless of stylesheet order
+   — unlike min-width, a plain `width` here still lets the JS-driven inline
+   style (which always outranks any class-based width) shrink it to a
+   circle during the morph. Wider than the other two demo pills on purpose,
+   for roomier padding around "MORPH PATH". */
+.ax-morph-path.morph-button {
+  width: 200px;
+}
+
+@media (max-width: 640px) {
+  .ax-morph-path.morph-button {
+    /* Smaller than the 200px desktop width, matching how .morph-button
+       itself shrinks at this breakpoint (159px -> 120px) — 200px here
+       would look oversized next to the other two mobile-sized pills. */
+    width: 150px;
+  }
 }
 
 .ax-morph-path__icon {

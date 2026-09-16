@@ -6,7 +6,7 @@ import './SiteMenu.css'
 const PAGES = [
   { to: '/', label: '1.0 Hover States' },
   { to: '/click-press-states', label: '2.0 Click/Press States' },
-  { to: '/transition-states', label: '3.0 Transition States' },
+  { to: '/transition-states', label: '3.0 Morph/Shape-shift Transition' },
 ]
 
 /**
