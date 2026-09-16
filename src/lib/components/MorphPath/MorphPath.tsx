@@ -47,6 +47,15 @@ const DEFAULT_SPRING: SpringConfig = { stiffness: 260, damping: 18, mass: 1 }
 // the icon spring used to be the same spring, which is what caused that.
 const DEFAULT_SHAPE_SPRING: SpringConfig = { stiffness: 260, damping: 34, mass: 1 }
 
+// Deliberately slower than DEFAULT_SHAPE_SPRING (lower stiffness, damping
+// kept close to its own critical value of 2*sqrt(90*1)≈19 for the same
+// no-overshoot reasoning) — only used for the label's reveal on open, not
+// its hide on close. The label used to just ride the shape spring's own t
+// while opening, which was smooth but read as too fast; giving it its own
+// slower spring lets it keep gently filling back in for a while after the
+// button itself has already finished settling into the pill.
+const LABEL_REVEAL_SPRING: SpringConfig = { stiffness: 90, damping: 19, mass: 1 }
+
 // Icon's own fixed footprint, in px — used to compute how much of the
 // button's current width is actually left over for the label.
 const ICON_WIDTH = 20
@@ -56,17 +65,17 @@ const ICON_WIDTH = 20
 // binding constraint (the real available-space cap below is).
 const LABEL_MAX_WIDTH = 300
 
-// The label's own hide/reveal pacing is asymmetric on purpose, not tied
-// 1:1 to the shape spring's t the way width/border-radius are:
-//  - closing (pill -> circle): hides fast, over just this leading
-//    fraction of t, then stays hidden through the rest of the shrink.
-//  - opening (circle -> pill): reveals across the *entire* t range, in
-//    step with the button's own resize the whole way.
-// An earlier version used the fast curve for both directions, which
-// read as a sudden appearance on open — full-range fixed that, but then
-// using the full-range curve for both directions made the close read as
-// noticeably slower than before. Two curves keeps both directions
-// matching how they already read right.
+// While closing, the label hides fast by riding the shape spring's own t —
+// linearly over just this leading fraction of it, then staying hidden
+// through the rest of the shrink. (Opening doesn't use this at all — see
+// LABEL_REVEAL_SPRING, which drives its own separate, slower spring
+// instead.) Earlier versions tried tying the label 1:1 to the shape
+// spring's t in both directions — smooth, but read as a sudden appearance
+// on open; and a shared single fast curve for both — fast, but read as
+// abrupt on close (the label finished well before the button did, leaving
+// it to keep shrinking around an already-empty gap). Separating "how fast"
+// (this fraction) from "what curve" (linear here, spring-driven for
+// opening) let each direction land on its own right feel independently.
 const CLOSE_LABEL_HIDE_FRACTION = 0.25
 
 function clamp01(value: number) {
@@ -105,15 +114,17 @@ function buildD(from: readonly Point[], to: readonly Point[], t: number) {
  * The label stays mounted the whole time — its opacity, max-width, and
  * margin all tween to 0 together (not a discrete unmount, which read as the
  * icon visibly snapping sideways the instant React removed it from flex
- * flow). The pacing of that tween is deliberately asymmetric by direction
- * — see CLOSE_LABEL_HIDE_FRACTION — fast while closing, matched to the
- * shape's own full t range while opening; max-width is additionally capped
- * at the button's own actual remaining space every frame, so the label can
- * never be wider than what's really left even for a single frame.
+ * flow). Hiding it (closing) and revealing it (opening) are driven by two
+ * different springs with deliberately different timing — see
+ * CLOSE_LABEL_HIDE_FRACTION and LABEL_REVEAL_SPRING for why. max-width is
+ * additionally capped at the button's own actual remaining space every
+ * frame, so the label can never be wider than what's really left even for
+ * a single frame.
  *
- * The glyph and the shape are driven by two independent springs, not one —
- * see DEFAULT_SHAPE_SPRING for why sharing a single spring between them
- * doesn't work.
+ * Three springs drive this in total: the glyph, the shape (width/
+ * border-radius), and the label's reveal — see DEFAULT_SHAPE_SPRING for
+ * why the glyph and shape can't share one, and LABEL_REVEAL_SPRING for why
+ * the label needs its own on top of that.
  */
 export function MorphPath({
   children,
@@ -131,6 +142,11 @@ export function MorphPath({
   const restRectRef = useRef<{ width: number; height: number } | null>(null)
   const morphedRef = useRef(false)
   const directionRef = useRef<'opening' | 'closing'>('closing')
+  // Updated every shape-spring frame, read by the label-reveal spring's own
+  // frame (a separate rAF loop — see LABEL_REVEAL_SPRING) so its
+  // available-space cap always reflects the button's real current width
+  // even though the two springs aren't ticking in lockstep.
+  const currentWidthRef = useRef(0)
 
   // Local "is it showing the X" state only matters in uncontrolled mode
   // (no `active` prop) — set from the click handler itself, never from the
@@ -144,52 +160,85 @@ export function MorphPath({
     pathRef.current?.setAttribute('d', buildD(PLUS, CROSS, clamp01(value.x)))
   }, [])
 
-  const applyShapeT = useCallback((value: { x: number }) => {
-    const t = clamp01(value.x)
-
-    const el = containerRef.current
-    const restRect = restRectRef.current
-    let currentWidth = restRect?.width ?? 0
-    if (el && restRect) {
-      const circleDiameter = restRect.height
-      currentWidth = lerp(restRect.width, circleDiameter, t)
-      el.style.width = `${currentWidth}px`
-      el.style.borderRadius = `${lerp(40, circleDiameter / 2, t)}px`
-    }
-
-    // `shrink` reparametrizes t into the label's own hide/reveal progress —
-    // fast (over CLOSE_LABEL_HIDE_FRACTION) while closing, 1:1 with t while
-    // opening. See CLOSE_LABEL_HIDE_FRACTION for why these differ. Opacity
-    // and margin follow this curve directly; max-width is the smaller of
-    // this same curve and the button's own actual remaining space
-    // (currentWidth minus the icon and this margin) — the space-based cap
-    // guarantees the label can never be wider than what's really left, so
-    // it can't ever peek past the button's own edge for a frame; the
-    // curve-based cap guarantees it still reaches exactly 0 once fully
-    // hidden even though real remaining space doesn't (a 71px circle still
-    // has ~51px "left" after the icon).
-    if (labelRef.current) {
-      const shrink = directionRef.current === 'closing' ? clamp01(t / CLOSE_LABEL_HIDE_FRACTION) : t
-      const marginLeft = lerp(6, 0, shrink)
-      const shrinkCurve = (1 - shrink) * LABEL_MAX_WIDTH
-      const available = Math.max(0, currentWidth - ICON_WIDTH - marginLeft)
-      labelRef.current.style.opacity = String(1 - shrink)
-      labelRef.current.style.marginLeft = `${marginLeft}px`
-      labelRef.current.style.maxWidth = `${Math.min(shrinkCurve, available)}px`
-    }
-    morphedRef.current = t >= 0.999
+  // Shared by both the shape spring (closing) and the label-reveal spring
+  // (opening) — `shrink` is 1 = fully hidden, 0 = fully shown. max-width is
+  // the smaller of the shrink curve and the button's own actual remaining
+  // space (currentWidth minus the icon and this margin): the space-based
+  // cap guarantees the label can never be wider than what's really left, so
+  // it can't ever peek past the button's own edge for a frame; the
+  // curve-based cap guarantees it still reaches exactly 0 once fully hidden
+  // even though real remaining space doesn't (a 71px circle still has
+  // ~51px "left" after the icon).
+  const applyLabelShrink = useCallback((shrink: number, currentWidth: number) => {
+    const label = labelRef.current
+    if (!label) return
+    const marginLeft = lerp(6, 0, shrink)
+    const shrinkCurve = (1 - shrink) * LABEL_MAX_WIDTH
+    const available = Math.max(0, currentWidth - ICON_WIDTH - marginLeft)
+    label.style.opacity = String(1 - shrink)
+    label.style.marginLeft = `${marginLeft}px`
+    label.style.maxWidth = `${Math.min(shrinkCurve, available)}px`
   }, [])
+
+  const applyShapeT = useCallback(
+    (value: { x: number }) => {
+      const t = clamp01(value.x)
+
+      const el = containerRef.current
+      const restRect = restRectRef.current
+      let currentWidth = restRect?.width ?? 0
+      if (el && restRect) {
+        const circleDiameter = restRect.height
+        currentWidth = lerp(restRect.width, circleDiameter, t)
+        el.style.width = `${currentWidth}px`
+        el.style.borderRadius = `${lerp(40, circleDiameter / 2, t)}px`
+      }
+      currentWidthRef.current = currentWidth
+
+      // Closing hides the label fast, riding this same spring's t — see
+      // CLOSE_LABEL_HIDE_FRACTION. Opening is handled entirely by the
+      // separate, slower label-reveal spring below instead (so this skips
+      // writing label styles then, leaving it exclusively in charge).
+      if (directionRef.current === 'closing') {
+        applyLabelShrink(clamp01(t / CLOSE_LABEL_HIDE_FRACTION), currentWidth)
+      }
+      morphedRef.current = t >= 0.999
+    },
+    [applyLabelShrink],
+  )
+
+  // `value.x`: 1 = hidden, 0 = fully revealed — same convention `shrink`
+  // uses elsewhere, so this can feed straight into applyLabelShrink.
+  const applyLabelRevealT = useCallback(
+    (value: { x: number }) => {
+      if (directionRef.current !== 'opening') return
+      applyLabelShrink(clamp01(value.x), currentWidthRef.current)
+    },
+    [applyLabelShrink],
+  )
 
   const { setTarget: setIconTarget } = useSpring(spring, applyIconT, { x: 0, y: 0 })
   const { setTarget: setShapeTarget } = useSpring(shapeSpring, applyShapeT, { x: 0, y: 0 })
+  const { setTarget: setLabelRevealTarget, jumpTo: jumpLabelReveal } = useSpring(LABEL_REVEAL_SPRING, applyLabelRevealT, {
+    x: 1,
+    y: 0,
+  })
 
   const setBothTargets = useCallback(
     (x: number) => {
       directionRef.current = x === 1 ? 'closing' : 'opening'
       setIconTarget({ x, y: 0 })
       setShapeTarget({ x, y: 0 })
+      if (x === 1) {
+        // Closing doesn't animate this spring at all (the shape spring's
+        // own fast hide above owns the label then) — just parks it back at
+        // "hidden" so the next open starts from a clean, consistent 1.
+        jumpLabelReveal({ x: 1, y: 0 })
+      } else {
+        setLabelRevealTarget({ x: 0, y: 0 })
+      }
     },
-    [setIconTarget, setShapeTarget],
+    [setIconTarget, setShapeTarget, setLabelRevealTarget, jumpLabelReveal],
   )
 
   // Re-measured on every toggle (not just once on mount) so a resize
