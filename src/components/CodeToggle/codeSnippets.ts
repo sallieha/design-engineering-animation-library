@@ -38,7 +38,7 @@ export const CODE_SNIPPETS: Record<string, string> = {
 </MorphContainer>
 
 <MorphPath className="morph-button glass">
-  Path
+  Morph Path
 </MorphPath>
 
 <MorphBlob className="morph-button glass">

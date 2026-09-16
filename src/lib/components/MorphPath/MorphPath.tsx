@@ -5,8 +5,10 @@ import './MorphPath.css'
 export interface MorphPathProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   /** Label shown next to the resting glyph — hidden once morphed into the circle. */
   children: ReactNode
-  /** Spring parameters driving the point interpolation and the shape morph. */
+  /** Spring parameters driving the glyph's point interpolation. */
   spring?: SpringConfig
+  /** Spring parameters driving the button's own shape morph (width/radius). */
+  shapeSpring?: SpringConfig
   /** Drives the morphed state programmatically instead of a real click. */
   active?: boolean
 }
@@ -32,7 +34,18 @@ const CROSS: [Point, Point, Point, Point] = [
   [18.5, 5.5],
 ]
 
+// Moderately underdamped so each arm swings slightly past its target before
+// settling — the "hand-drawn" quality, not a mechanical snap. At this small
+// (2px-scale) coordinate range that overshoot reads as character.
 const DEFAULT_SPRING: SpringConfig = { stiffness: 260, damping: 18, mass: 1 }
+
+// Same stiffness, but damping raised close to critical (2*sqrt(260*1)≈32.25
+// is the critical value) so the button's own width/radius settle with
+// essentially no overshoot. The glyph's overshoot is subtle at a 2px scale;
+// the exact same overshoot applied to an ~88px width delta reads as a
+// visible twitch right as it finishes expanding or collapsing — this and
+// the icon spring used to be the same spring, which is what caused that.
+const DEFAULT_SHAPE_SPRING: SpringConfig = { stiffness: 260, damping: 34, mass: 1 }
 
 // The label fades and unmounts over this leading fraction of the morph, so
 // it's already invisible by the time it leaves flex flow — removing it
@@ -65,19 +78,28 @@ function buildD(from: readonly Point[], to: readonly Point[], t: number) {
 /**
  * Path/SVG morph: the glyph's own `d` attribute interpolates point-by-point
  * between two matched-structure shapes every frame, rather than crossfading
- * two separate icons or relying on a canned CSS transition. A moderately
- * underdamped spring (rather than a critically-damped one) lets each arm
- * swing slightly past its target before settling — the "slight easing
- * variation" that keeps this reading as hand-drawn rather than mechanical.
+ * two separate icons or relying on a canned CSS transition.
  *
- * The button itself morphs alongside the glyph: width and border-radius
- * interpolate (via the same spring value, driven directly on this element —
- * no separate overlay is needed since, unlike MorphContainer, this never
- * leaves its own footprint) from the resting pill down to a circle whose
- * diameter equals the pill's own height, so it lands on a perfect circle
- * with no extra sizing to configure. Height never changes.
+ * The button itself morphs alongside the glyph — width and border-radius
+ * interpolate directly on this element (no separate overlay is needed since,
+ * unlike MorphContainer, this never leaves its own footprint) from the
+ * resting pill down to a circle whose diameter equals the pill's own height.
+ * Height never changes.
+ *
+ * The glyph and the shape are driven by two independent springs, not one —
+ * see DEFAULT_SHAPE_SPRING for why sharing a single spring between them
+ * doesn't work.
  */
-export function MorphPath({ children, spring = DEFAULT_SPRING, active, className, style, onClick, ...rest }: MorphPathProps) {
+export function MorphPath({
+  children,
+  spring = DEFAULT_SPRING,
+  shapeSpring = DEFAULT_SHAPE_SPRING,
+  active,
+  className,
+  style,
+  onClick,
+  ...rest
+}: MorphPathProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const pathRef = useRef<SVGPathElement>(null)
   const labelRef = useRef<HTMLSpanElement>(null)
@@ -93,15 +115,18 @@ export function MorphPath({ children, spring = DEFAULT_SPRING, active, className
   const uncontrolledOpenRef = useRef(false)
   const [labelVisible, setLabelVisible] = useState(true)
 
-  const applyT = useCallback((value: { x: number }) => {
+  const applyIconT = useCallback((value: { x: number }) => {
+    pathRef.current?.setAttribute('d', buildD(PLUS, CROSS, clamp01(value.x)))
+  }, [])
+
+  const applyShapeT = useCallback((value: { x: number }) => {
     const t = clamp01(value.x)
-    pathRef.current?.setAttribute('d', buildD(PLUS, CROSS, t))
 
     const el = containerRef.current
-    const rest = restRectRef.current
-    if (el && rest) {
-      const circleDiameter = rest.height
-      el.style.width = `${lerp(rest.width, circleDiameter, t)}px`
+    const restRect = restRectRef.current
+    if (el && restRect) {
+      const circleDiameter = restRect.height
+      el.style.width = `${lerp(restRect.width, circleDiameter, t)}px`
       el.style.borderRadius = `${lerp(40, circleDiameter / 2, t)}px`
     }
 
@@ -117,7 +142,16 @@ export function MorphPath({ children, spring = DEFAULT_SPRING, active, className
     }
   }, [])
 
-  const { setTarget } = useSpring(spring, applyT, { x: 0, y: 0 })
+  const { setTarget: setIconTarget } = useSpring(spring, applyIconT, { x: 0, y: 0 })
+  const { setTarget: setShapeTarget } = useSpring(shapeSpring, applyShapeT, { x: 0, y: 0 })
+
+  const setBothTargets = useCallback(
+    (x: number) => {
+      setIconTarget({ x, y: 0 })
+      setShapeTarget({ x, y: 0 })
+    },
+    [setIconTarget, setShapeTarget],
+  )
 
   // Re-measured on every toggle (not just once on mount) so a resize
   // between plays — e.g. rotating a device, crossing the mobile breakpoint
@@ -134,8 +168,8 @@ export function MorphPath({ children, spring = DEFAULT_SPRING, active, className
   useEffect(() => {
     if (active === undefined) return
     if (active) measureRestRect()
-    setTarget({ x: active ? 1 : 0, y: 0 })
-  }, [active, measureRestRect, setTarget])
+    setBothTargets(active ? 1 : 0)
+  }, [active, measureRestRect, setBothTargets])
 
   const isOpen = active === undefined ? uncontrolledOpen : active
 
@@ -151,7 +185,7 @@ export function MorphPath({ children, spring = DEFAULT_SPRING, active, className
         uncontrolledOpenRef.current = next
         if (next) measureRestRect()
         setUncontrolledOpen(next)
-        setTarget({ x: next ? 1 : 0, y: 0 })
+        setBothTargets(next ? 1 : 0)
       }}
       aria-pressed={isOpen}
       {...rest}

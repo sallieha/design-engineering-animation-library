@@ -2,7 +2,10 @@
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  /* Tightened from 10px — "Morph Path" is long enough at the shared
+     .morph-button font-size that it wraps to two lines otherwise (needs
+     ~132px against ~129px available at the default gap). */
+  gap: 6px;
   overflow: hidden;
   /* width/border-radius are driven per-frame from JS (see applyT in
      MorphPath.tsx) as it morphs from the resting pill to a circle — this
@@ -15,4 +18,12 @@
 
 .ax-morph-path__label {
   line-height: 1;
+  white-space: nowrap;
+  /* A direct declaration here always overrides the inherited value from
+     the consumer's own className (e.g. .morph-button's 0.02em) regardless
+     of stylesheet order — inheritance has no specificity to contest a
+     directly-matching rule, unlike the position-driven bug this component
+     family hit elsewhere. Tightened purely to help "Morph Path" fit on one
+     line within the shared pill width. */
+  letter-spacing: 0;
 }

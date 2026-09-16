@@ -27,7 +27,7 @@ function TransitionStates() {
           Container
         </MorphContainer>
 
-        <MorphPath className="morph-button glass">Path</MorphPath>
+        <MorphPath className="morph-button glass">Morph Path</MorphPath>
 
         <MorphBlob className="morph-button glass">Liquid</MorphBlob>
       </div>
