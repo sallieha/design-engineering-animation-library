@@ -47,11 +47,14 @@ const DEFAULT_SPRING: SpringConfig = { stiffness: 260, damping: 18, mass: 1 }
 // the icon spring used to be the same spring, which is what caused that.
 const DEFAULT_SHAPE_SPRING: SpringConfig = { stiffness: 260, damping: 34, mass: 1 }
 
-// The label fades and unmounts over this leading fraction of the morph, so
-// it's already invisible by the time it leaves flex flow — removing it
-// outright (rather than just fading opacity) is what lets the icon recenter
-// into a true circle instead of sitting off-center in a leftover gap.
+// The label fades AND shrinks to zero width over this leading fraction of
+// the morph, so both hit zero at the same instant — see applyShapeT.
 const LABEL_HIDE_THRESHOLD = 0.25
+
+// Safely larger than the label could ever naturally need, so it's
+// effectively "unconstrained" at rest (shrink=0) — just a ceiling for the
+// max-width tween, not a real cap.
+const LABEL_MAX_WIDTH = 300
 
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value))
@@ -86,6 +89,15 @@ function buildD(from: readonly Point[], to: readonly Point[], t: number) {
  * resting pill down to a circle whose diameter equals the pill's own height.
  * Height never changes.
  *
+ * The label stays mounted the whole time — its opacity, max-width, and
+ * margin all tween to 0 together (not a discrete unmount) so it leaves flex
+ * flow gradually. An earlier version unmounted it outright once t crossed
+ * the hide threshold, which did get the icon to recenter, but the unmount
+ * itself was a one-frame layout change React doesn't animate — the icon
+ * visibly snapped ~15% of the button's own width sideways at that instant,
+ * on both the way in and the way out. Continuous shrink removes the jump
+ * entirely: by the time the label is fully faded it also has zero footprint.
+ *
  * The glyph and the shape are driven by two independent springs, not one —
  * see DEFAULT_SHAPE_SPRING for why sharing a single spring between them
  * doesn't work.
@@ -104,7 +116,7 @@ export function MorphPath({
   const pathRef = useRef<SVGPathElement>(null)
   const labelRef = useRef<HTMLSpanElement>(null)
   const restRectRef = useRef<{ width: number; height: number } | null>(null)
-  const labelHiddenRef = useRef(false)
+  const morphedRef = useRef(false)
 
   // Local "is it showing the X" state only matters in uncontrolled mode
   // (no `active` prop) — set from the click handler itself, never from the
@@ -113,7 +125,6 @@ export function MorphPath({
   // other component's active-prop effect in this library.
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
   const uncontrolledOpenRef = useRef(false)
-  const [labelVisible, setLabelVisible] = useState(true)
 
   const applyIconT = useCallback((value: { x: number }) => {
     pathRef.current?.setAttribute('d', buildD(PLUS, CROSS, clamp01(value.x)))
@@ -130,16 +141,16 @@ export function MorphPath({
       el.style.borderRadius = `${lerp(40, circleDiameter / 2, t)}px`
     }
 
-    // Fades to 0 opacity right as it crosses the hide threshold, so by the
-    // time it unmounts (removing it from flex flow so the icon can recenter
-    // into a true circle) it's already invisible — no pop.
-    if (labelRef.current) labelRef.current.style.opacity = String(clamp01(1 - t / LABEL_HIDE_THRESHOLD))
-
-    const shouldHide = t >= LABEL_HIDE_THRESHOLD
-    if (shouldHide !== labelHiddenRef.current) {
-      labelHiddenRef.current = shouldHide
-      setLabelVisible(!shouldHide)
+    // Opacity, max-width, and margin all reach 0 at the same instant — the
+    // label has zero visual presence and zero layout footprint together,
+    // so the icon eases into center rather than snapping there.
+    const shrink = clamp01(t / LABEL_HIDE_THRESHOLD)
+    if (labelRef.current) {
+      labelRef.current.style.opacity = String(1 - shrink)
+      labelRef.current.style.maxWidth = `${(1 - shrink) * LABEL_MAX_WIDTH}px`
+      labelRef.current.style.marginLeft = `${(1 - shrink) * 6}px`
     }
+    morphedRef.current = shrink >= 1
   }, [])
 
   const { setTarget: setIconTarget } = useSpring(spring, applyIconT, { x: 0, y: 0 })
@@ -162,7 +173,7 @@ export function MorphPath({
     const rect = el.getBoundingClientRect()
     // Reading the rect mid-morph would capture an already-shrunk width —
     // only trust a measurement taken while at rest.
-    if (!labelHiddenRef.current) restRectRef.current = { width: rect.width, height: rect.height }
+    if (!morphedRef.current) restRectRef.current = { width: rect.width, height: rect.height }
   }, [])
 
   useEffect(() => {
@@ -193,11 +204,9 @@ export function MorphPath({
       <svg className="ax-morph-path__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path ref={pathRef} d={buildD(PLUS, CROSS, 0)} stroke="white" strokeWidth="2" strokeLinecap="round" />
       </svg>
-      {labelVisible && (
-        <span ref={labelRef} className="ax-morph-path__label">
-          {children}
-        </span>
-      )}
+      <span ref={labelRef} className="ax-morph-path__label">
+        {children}
+      </span>
     </div>
   )
 }

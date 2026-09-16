@@ -3,10 +3,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* Tightened from 10px — "Morph Path" is long enough at the shared
-     .morph-button font-size that it wraps to two lines otherwise (needs
-     ~132px against ~129px available at the default gap). */
-  gap: 6px;
+  /* No `gap` here — the icon/label spacing lives entirely on the label's
+     own margin-left instead (see .ax-morph-path__label), because that
+     margin needs to tween to 0 in lockstep with the label's own width as
+     it morphs; a flex `gap` can't be interpolated the same way (it still
+     reserves its full value between two adjacent flex items even once one
+     has shrunk to zero width). */
   overflow: hidden;
   /* width/border-radius are driven per-frame from JS (see applyT in
      MorphPath.tsx) as it morphs from the resting pill to a circle — this
@@ -44,6 +46,12 @@
 .ax-morph-path__label {
   line-height: 1;
   white-space: nowrap;
+  overflow: hidden;
+  /* Matches the JS-driven values applyShapeT sets every frame during a
+     morph (see MorphPath.tsx) — this is only the resting/initial paint,
+     same reasoning as .ax-morph-path.morph-button's own width comment. */
+  max-width: 300px;
+  margin-left: 6px;
   /* A direct declaration here always overrides the inherited value from
      the consumer's own className (e.g. .morph-button's 0.02em) regardless
      of stylesheet order — inheritance has no specificity to contest a

@@ -3,12 +3,20 @@
 }
 
 /* Same vertical-stack layout as ClickPressStates — same button spec, one
-   column. */
+   column. Fixed width (matching Morph Path's own 200px resting width, the
+   widest of the three) rather than the flex default of auto-sizing to its
+   widest child — MorphPath's own width is driven by JS every animation
+   frame (see MorphPath.tsx), and without a fixed width here, every one of
+   those frames also resized this shared container, forcing Container and
+   Liquid to reflow right along with it even though their own size never
+   changes — that shared-container reflow, not any real movement of their
+   own, was what read as "all 3 buttons shake". */
 .playground__stack {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 22px;
+  width: 200px;
   transform: translateY(-28px);
 }
 
@@ -39,6 +47,8 @@
 
   .playground__stack {
     gap: 16px;
+    /* Matches Morph Path's mobile resting width (150px). */
+    width: 150px;
   }
 
   .morph-button {
