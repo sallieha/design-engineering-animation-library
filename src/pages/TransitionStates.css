@@ -40,6 +40,24 @@
   user-select: none;
 }
 
+/* Two classes beats .morph-button's own single-class width regardless of
+   stylesheet order (same reasoning as .ax-morph-path.morph-button's own
+   width override) — "Morph Container" doesn't fit the shared 159px
+   width, and unlike Morph Path there's no glyph to anchor, so there's no
+   reason to force a fixed width here rather than sizing to content.
+   `max-content`, not `auto` — .playground__stack has its own fixed 200px
+   width (see its own comment above), and a flex item's `auto` width is
+   clamped to whatever space its container actually has, not just its
+   content's preferred size — with `auto` here "Morph Container" doesn't
+   widen the button past that 200px cap, it just wraps text inside it
+   instead. `max-content` opts out of that clamp and sizes to the text's
+   own single-line width regardless of the parent's own width. */
+.morph-button.morph-container-button {
+  width: max-content;
+  white-space: nowrap;
+  padding: 0 32px;
+}
+
 @media (max-width: 640px) {
   .playground {
     padding: 16px;
@@ -55,5 +73,10 @@
     width: 120px;
     height: 54px;
     font-size: 15px;
+  }
+
+  .morph-button.morph-container-button {
+    width: max-content;
+    padding: 0 22px;
   }
 }

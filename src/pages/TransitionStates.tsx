@@ -16,7 +16,7 @@ function TransitionStates() {
     <div className="playground">
       <div className="playground__stack">
         <MorphContainer
-          className="morph-button glass"
+          className="morph-button morph-container-button glass"
           panelContent={
             <>
               <p className="ax-morph-overlay__panel-title">Container Morph</p>
@@ -24,7 +24,7 @@ function TransitionStates() {
             </>
           }
         >
-          Container
+          Container Morph
         </MorphContainer>
 
         <MorphPath className="morph-button glass">Morph Path</MorphPath>

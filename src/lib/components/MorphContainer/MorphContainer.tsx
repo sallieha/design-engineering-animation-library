@@ -19,7 +19,7 @@ export interface MorphContainerProps extends Omit<HTMLAttributes<HTMLDivElement>
   panelWidth?: number
   /** Expanded panel height, in px (clamped to fit the viewport). */
   panelHeight?: number
-  /** Gap between the trigger's top edge and the expanded panel, in px. */
+  /** Gap between the panel's bottom edge and the trigger's own bottom edge, in px — 0 keeps them exactly flush, reading as one continuous shape. */
   gap?: number
   /** Corner radius at rest, in px — should match the pill's own CSS radius. */
   radius?: number
@@ -63,20 +63,27 @@ function clamp01(value: number) {
  * keeps content undistorted at the cost of triggering layout each frame,
  * which is a non-issue for a single small overlay like this.
  *
- * The panel expands anchored to the trigger's own top edge (horizontally
- * centered on it) rather than flying to the center of the screen — it
- * reads as the button itself growing upward into a menu, not as an
- * unrelated dialog that happens to open near it. There's deliberately no
- * dimming backdrop: closing on an outside click/tap is handled the same
- * way SiteMenu's own dropdown does it (a document `pointerdown` listener
- * while open), not by an invisible full-screen click target.
+ * The panel's bottom edge and horizontal center are set to exactly match
+ * the trigger's own — not "nearby", identical — so the shape only ever
+ * grows upward and outward from the same base, the way the reference this
+ * was built from does it, rather than flying off to some unrelated spot
+ * on screen. This falls out of the linear interpolation for free: lerping
+ * `top` and `height` independently between two rects whose `top + height`
+ * (bottom) already match by construction means that sum stays exactly
+ * constant at every frame in between too, not just at the two ends — the
+ * same reasoning MorphPath's own icon anchor relies on elsewhere in this
+ * library, applied here to a whole edge instead of a single point. There's
+ * deliberately no dimming backdrop: closing on an outside click/tap is
+ * handled the same way SiteMenu's own dropdown does it (a document
+ * `pointerdown` listener while open), not by an invisible full-screen
+ * click target.
  */
 export function MorphContainer({
   children,
   panelContent,
   panelWidth = 340,
   panelHeight = 220,
-  gap = 12,
+  gap = 0,
   radius = 40,
   panelRadius = 24,
   spring = DEFAULT_SPRING,
@@ -143,12 +150,17 @@ export function MorphContainer({
     const width = Math.min(panelWidth, window.innerWidth - 32)
     const height = Math.min(panelHeight, window.innerHeight - 32)
 
-    // Anchored above the trigger, centered on its horizontal midpoint —
-    // clamped into the viewport (16px margin) rather than the trigger's
-    // own edges, since a button near the screen's top/side would otherwise
-    // push the panel partly off-screen.
+    // Bottom edge (top + height) matches the trigger's own bottom exactly
+    // (see the component doc comment for why that keeps it constant for
+    // every frame in between, not just the two ends) and horizontal center
+    // matches too, so the panel only ever grows upward and outward from
+    // the trigger's own footprint. Clamped into the viewport (16px margin)
+    // as a fallback for a trigger near the screen's top/side, where either
+    // would otherwise push the panel off-screen — a clamp firing there
+    // does mean the bottom/center can shift after all, but there's no
+    // "connected" position left to keep once the ideal one doesn't fit.
     const idealLeft = rect.left + rect.width / 2 - width / 2
-    const idealTop = rect.top - gap - height
+    const idealTop = rect.top + rect.height - gap - height
 
     setFirstRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
     setLastRect({
