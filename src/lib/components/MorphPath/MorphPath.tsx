@@ -51,10 +51,23 @@ const DEFAULT_SHAPE_SPRING: SpringConfig = { stiffness: 260, damping: 34, mass: 
 // button's current width is actually left over for the label.
 const ICON_WIDTH = 20
 
-// A ceiling for the label's own "shrink toward 0 by t=1" curve — safely
-// larger than the label could ever naturally need, so at t=0 it isn't the
+// A ceiling for the label's own "shrink toward 0" curve — safely larger
+// than the label could ever naturally need, so at rest it isn't the
 // binding constraint (the real available-space cap below is).
 const LABEL_MAX_WIDTH = 300
+
+// The label's own hide/reveal pacing is asymmetric on purpose, not tied
+// 1:1 to the shape spring's t the way width/border-radius are:
+//  - closing (pill -> circle): hides fast, over just this leading
+//    fraction of t, then stays hidden through the rest of the shrink.
+//  - opening (circle -> pill): reveals across the *entire* t range, in
+//    step with the button's own resize the whole way.
+// An earlier version used the fast curve for both directions, which
+// read as a sudden appearance on open — full-range fixed that, but then
+// using the full-range curve for both directions made the close read as
+// noticeably slower than before. Two curves keeps both directions
+// matching how they already read right.
+const CLOSE_LABEL_HIDE_FRACTION = 0.25
 
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value))
@@ -90,19 +103,13 @@ function buildD(from: readonly Point[], to: readonly Point[], t: number) {
  * Height never changes.
  *
  * The label stays mounted the whole time — its opacity, max-width, and
- * margin all tween to 0 together across the *same* full t range the shape
- * itself uses (not a discrete unmount, and not some faster leading fraction
- * of t). Two earlier versions each fixed one problem and left another: an
- * outright unmount at a threshold did get the icon to recenter, but the
- * unmount itself was a one-frame layout change React doesn't animate — the
- * icon visibly snapped sideways. Switching that to a continuous tween but
- * still compressed into an early fraction of t fixed the snap but not the
- * pacing — the label finished fading well before the button finished
- * resizing, which read as a rushed, disconnected sub-animation. Tying it to
- * the same t range the shape uses removes both: the label recedes/returns
- * in step with the resize, and max-width is additionally capped at the
- * button's own actual remaining space every frame, so it's never wider
- * than what's really left even for a single frame.
+ * margin all tween to 0 together (not a discrete unmount, which read as the
+ * icon visibly snapping sideways the instant React removed it from flex
+ * flow). The pacing of that tween is deliberately asymmetric by direction
+ * — see CLOSE_LABEL_HIDE_FRACTION — fast while closing, matched to the
+ * shape's own full t range while opening; max-width is additionally capped
+ * at the button's own actual remaining space every frame, so the label can
+ * never be wider than what's really left even for a single frame.
  *
  * The glyph and the shape are driven by two independent springs, not one —
  * see DEFAULT_SHAPE_SPRING for why sharing a single spring between them
@@ -123,6 +130,7 @@ export function MorphPath({
   const labelRef = useRef<HTMLSpanElement>(null)
   const restRectRef = useRef<{ width: number; height: number } | null>(null)
   const morphedRef = useRef(false)
+  const directionRef = useRef<'opening' | 'closing'>('closing')
 
   // Local "is it showing the X" state only matters in uncontrolled mode
   // (no `active` prop) — set from the click handler itself, never from the
@@ -149,23 +157,23 @@ export function MorphPath({
       el.style.borderRadius = `${lerp(40, circleDiameter / 2, t)}px`
     }
 
-    // Opacity and margin fade across the *entire* t range (not some early
-    // fraction of it), so the label recedes/returns at the same pace as
-    // the button's own resize instead of rushing through its own faster
-    // sub-animation — that pacing mismatch (the label used to fade+collapse
-    // over just the first quarter of t) was what read as a sudden jump on
-    // both ends. max-width is the smaller of that same full-range curve and
-    // the button's own actual remaining space (currentWidth minus the
-    // icon and this margin) — the space-based cap guarantees the label can
-    // never be wider than what's really left, so it can't ever peek past
-    // the button's own edge for a frame; the curve-based cap guarantees it
-    // still reaches exactly 0 at t=1 even though real remaining space
-    // doesn't (a 71px circle still has ~51px "left" after the icon).
+    // `shrink` reparametrizes t into the label's own hide/reveal progress —
+    // fast (over CLOSE_LABEL_HIDE_FRACTION) while closing, 1:1 with t while
+    // opening. See CLOSE_LABEL_HIDE_FRACTION for why these differ. Opacity
+    // and margin follow this curve directly; max-width is the smaller of
+    // this same curve and the button's own actual remaining space
+    // (currentWidth minus the icon and this margin) — the space-based cap
+    // guarantees the label can never be wider than what's really left, so
+    // it can't ever peek past the button's own edge for a frame; the
+    // curve-based cap guarantees it still reaches exactly 0 once fully
+    // hidden even though real remaining space doesn't (a 71px circle still
+    // has ~51px "left" after the icon).
     if (labelRef.current) {
-      const marginLeft = lerp(6, 0, t)
-      const shrinkCurve = (1 - t) * LABEL_MAX_WIDTH
+      const shrink = directionRef.current === 'closing' ? clamp01(t / CLOSE_LABEL_HIDE_FRACTION) : t
+      const marginLeft = lerp(6, 0, shrink)
+      const shrinkCurve = (1 - shrink) * LABEL_MAX_WIDTH
       const available = Math.max(0, currentWidth - ICON_WIDTH - marginLeft)
-      labelRef.current.style.opacity = String(1 - t)
+      labelRef.current.style.opacity = String(1 - shrink)
       labelRef.current.style.marginLeft = `${marginLeft}px`
       labelRef.current.style.maxWidth = `${Math.min(shrinkCurve, available)}px`
     }
@@ -177,6 +185,7 @@ export function MorphPath({
 
   const setBothTargets = useCallback(
     (x: number) => {
+      directionRef.current = x === 1 ? 'closing' : 'opening'
       setIconTarget({ x, y: 0 })
       setShapeTarget({ x, y: 0 })
     },
