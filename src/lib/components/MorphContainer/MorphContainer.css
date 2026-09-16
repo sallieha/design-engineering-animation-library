@@ -33,9 +33,20 @@
      the first spring tick lands. */
 }
 
+/* Bottom-anchored with a fixed height (set inline from the trigger's own
+   measured height — see MorphContainer.tsx), not `inset: 0` — the
+   overlay's own height is still animating for most of this element's
+   life, and stretching to fill it would center the label within
+   whatever that current (larger) height is. Since the overlay's bottom
+   edge is already fixed (see the component doc comment), pinning this to
+   the same bottom edge with a height that's fixed from the start makes
+   the label's own vertical center fixed too, for every frame — not just
+   once the shrink finishes — so it doesn't slide as it fades in. */
 .ax-morph-overlay__pill-label {
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   align-items: center;
   justify-content: center;

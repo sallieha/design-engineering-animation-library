@@ -260,7 +260,20 @@ export function MorphContainer({
             role="button"
             aria-label="Collapse"
           >
-            <div ref={pillLabelRef} className="ax-morph-overlay__pill-label">
+            <div
+              ref={pillLabelRef}
+              className="ax-morph-overlay__pill-label"
+              // Fixed to the pill's own resting height (not `inset: 0`,
+              // which would stretch to the overlay's own current,
+              // still-animating height) — see the component doc comment
+              // for why that matters: without this, the vertically
+              // centered label visibly slides down as the box shrinks
+              // toward the pill (its bottom is fixed, so a shorter box
+              // has a lower center), right as it's fading in from
+              // opacity 0, reading as the label glitching downward
+              // rather than the button settling.
+              style={{ height: firstRect.height }}
+            >
               {children}
             </div>
             <div ref={panelLabelRef} className="ax-morph-overlay__panel-content">
