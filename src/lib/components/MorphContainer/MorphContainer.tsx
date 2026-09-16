@@ -17,8 +17,10 @@ export interface MorphContainerProps extends Omit<HTMLAttributes<HTMLDivElement>
   panelContent?: ReactNode
   /** Expanded panel width, in px (clamped to fit the viewport). */
   panelWidth?: number
-  /** Expanded panel height, in px. */
+  /** Expanded panel height, in px (clamped to fit the viewport). */
   panelHeight?: number
+  /** Gap between the trigger's top edge and the expanded panel, in px. */
+  gap?: number
   /** Corner radius at rest, in px — should match the pill's own CSS radius. */
   radius?: number
   /** Corner radius once fully expanded, in px. */
@@ -60,12 +62,21 @@ function clamp01(value: number) {
  * pill and panel don't share an aspect ratio — direct box interpolation
  * keeps content undistorted at the cost of triggering layout each frame,
  * which is a non-issue for a single small overlay like this.
+ *
+ * The panel expands anchored to the trigger's own top edge (horizontally
+ * centered on it) rather than flying to the center of the screen — it
+ * reads as the button itself growing upward into a menu, not as an
+ * unrelated dialog that happens to open near it. There's deliberately no
+ * dimming backdrop: closing on an outside click/tap is handled the same
+ * way SiteMenu's own dropdown does it (a document `pointerdown` listener
+ * while open), not by an invisible full-screen click target.
  */
 export function MorphContainer({
   children,
   panelContent,
   panelWidth = 340,
   panelHeight = 220,
+  gap = 12,
   radius = 40,
   panelRadius = 24,
   spring = DEFAULT_SPRING,
@@ -77,7 +88,6 @@ export function MorphContainer({
 }: MorphContainerProps) {
   const triggerRef = useRef<HTMLDivElement>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
-  const backdropRef = useRef<HTMLDivElement>(null)
   const pillLabelRef = useRef<HTMLDivElement>(null)
   const panelLabelRef = useRef<HTMLDivElement>(null)
 
@@ -109,7 +119,6 @@ export function MorphContainer({
         overlay.style.borderRadius = `${radius + (panelRadius - radius) * t}px`
       }
 
-      if (backdropRef.current) backdropRef.current.style.opacity = String(clamp01(t / 0.6))
       // Crossfades the pill's own label out and the panel's content in —
       // the container itself never pops between two looks, only this inner
       // content does, same as the underlying material design "container
@@ -134,10 +143,17 @@ export function MorphContainer({
     const width = Math.min(panelWidth, window.innerWidth - 32)
     const height = Math.min(panelHeight, window.innerHeight - 32)
 
+    // Anchored above the trigger, centered on its horizontal midpoint —
+    // clamped into the viewport (16px margin) rather than the trigger's
+    // own edges, since a button near the screen's top/side would otherwise
+    // push the panel partly off-screen.
+    const idealLeft = rect.left + rect.width / 2 - width / 2
+    const idealTop = rect.top - gap - height
+
     setFirstRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
     setLastRect({
-      top: (window.innerHeight - height) / 2,
-      left: (window.innerWidth - width) / 2,
+      top: Math.max(16, idealTop),
+      left: Math.min(Math.max(16, idealLeft), window.innerWidth - 16 - width),
       width,
       height,
     })
@@ -147,7 +163,7 @@ export function MorphContainer({
     // before the spring starts pulling it toward the panel — otherwise the
     // very first frame could be scheduled before firstRect/lastRect commit.
     requestAnimationFrame(() => setTarget({ x: 1, y: 0 }))
-  }, [panelWidth, panelHeight, setTarget])
+  }, [panelWidth, panelHeight, gap, setTarget])
 
   const close = useCallback(() => {
     directionRef.current = 'closing'
@@ -167,6 +183,19 @@ export function MorphContainer({
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [mounted, close])
+
+  // No dimming backdrop behind the panel, so there's no full-screen click
+  // target to close it — closes on any pointerdown outside the panel
+  // itself instead, the same way SiteMenu's own dropdown does.
+  useEffect(() => {
+    if (!mounted) return
+    function handlePointerDown(e: PointerEvent) {
+      if (overlayRef.current?.contains(e.target as Node)) return
+      close()
+    }
+    document.addEventListener('pointerdown', handlePointerDown)
+    return () => document.removeEventListener('pointerdown', handlePointerDown)
   }, [mounted, close])
 
   return (
@@ -196,44 +225,41 @@ export function MorphContainer({
           // — this page's own `.playground__stack` has one — so without the
           // portal, top/left computed from window.innerWidth/innerHeight
           // would land in the wrong box entirely.
-          <>
-            <div ref={backdropRef} className="ax-morph-backdrop" onClick={close} aria-hidden="true" />
-            <div
-              ref={overlayRef}
-              className={`ax-morph-overlay glass${className ? ` ${className}` : ''}`}
-              style={{
-                // Set inline (not left to the .ax-morph-overlay CSS rule)
-                // because the consumer's own className is reused here for
-                // visual parity with the pill (see the className prop
-                // above) — that className carries its own `position`
-                // declaration (e.g. `.morph-button { position: relative }`)
-                // at equal specificity, and source order isn't something
-                // this component controls. An inline style always wins
-                // over any class-based rule, so this can't be clobbered.
-                position: 'fixed',
-                top: firstRect.top,
-                left: firstRect.left,
-                width: firstRect.width,
-                height: firstRect.height,
-                borderRadius: radius,
-              }}
-              onClick={close}
-              role="button"
-              aria-label="Collapse"
-            >
-              <div ref={pillLabelRef} className="ax-morph-overlay__pill-label">
-                {children}
-              </div>
-              <div ref={panelLabelRef} className="ax-morph-overlay__panel-content">
-                {panelContent ?? (
-                  <>
-                    <p className="ax-morph-overlay__panel-title">Expanded panel</p>
-                    <p className="ax-morph-overlay__panel-subtitle">Same element, new bounds</p>
-                  </>
-                )}
-              </div>
+          <div
+            ref={overlayRef}
+            className={`ax-morph-overlay glass${className ? ` ${className}` : ''}`}
+            style={{
+              // Set inline (not left to the .ax-morph-overlay CSS rule)
+              // because the consumer's own className is reused here for
+              // visual parity with the pill (see the className prop
+              // above) — that className carries its own `position`
+              // declaration (e.g. `.morph-button { position: relative }`)
+              // at equal specificity, and source order isn't something
+              // this component controls. An inline style always wins
+              // over any class-based rule, so this can't be clobbered.
+              position: 'fixed',
+              top: firstRect.top,
+              left: firstRect.left,
+              width: firstRect.width,
+              height: firstRect.height,
+              borderRadius: radius,
+            }}
+            onClick={close}
+            role="button"
+            aria-label="Collapse"
+          >
+            <div ref={pillLabelRef} className="ax-morph-overlay__pill-label">
+              {children}
             </div>
-          </>,
+            <div ref={panelLabelRef} className="ax-morph-overlay__panel-content">
+              {panelContent ?? (
+                <>
+                  <p className="ax-morph-overlay__panel-title">Expanded panel</p>
+                  <p className="ax-morph-overlay__panel-subtitle">Same element, new bounds</p>
+                </>
+              )}
+            </div>
+          </div>,
           document.body,
         )}
     </>

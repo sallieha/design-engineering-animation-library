@@ -12,15 +12,6 @@
   pointer-events: none;
 }
 
-.ax-morph-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1199;
-  background: rgba(5, 7, 15, 0.6);
-  opacity: 0;
-  cursor: pointer;
-}
-
 .ax-morph-overlay {
   /* This alone isn't load-bearing — the consumer's own className (merged
      onto this element for visual parity with the pill) can carry its own
