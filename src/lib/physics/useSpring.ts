@@ -31,8 +31,6 @@ export function useSpring(
   onFrame?: (value: SpringVector) => void,
   initial: SpringVector = { x: 0, y: 0 },
 ) {
-  const { stiffness, damping, mass, restThreshold } = { ...DEFAULT_CONFIG, ...config }
-
   const position = useRef<SpringVector>(initial)
   const velocity = useRef<SpringVector>({ x: 0, y: 0 })
   const target = useRef<SpringVector>(initial)
@@ -40,6 +38,16 @@ export function useSpring(
   const lastTime = useRef<number | null>(null)
   const onFrameRef = useRef(onFrame)
   onFrameRef.current = onFrame
+
+  // Read fresh every tick (see below) rather than destructured once and
+  // closed over — a caller that swaps `config` mid-animation (e.g. a
+  // different spring "feel" per direction on the same continuous value, so
+  // interrupting it never jumps the way two separate springs can) needs
+  // that to take effect on the very next frame, including for a tick loop
+  // that's already mid-flight and was scheduled from an earlier render's
+  // `tick` closure.
+  const configRef = useRef<Required<SpringConfig>>({ ...DEFAULT_CONFIG, ...config })
+  configRef.current = { ...DEFAULT_CONFIG, ...config }
 
   const stop = useCallback(() => {
     if (frame.current !== null) {
@@ -51,6 +59,7 @@ export function useSpring(
 
   const tick = useCallback(
     (time: number) => {
+      const { stiffness, damping, mass, restThreshold } = configRef.current
       const last = lastTime.current ?? time
       // Clamp so a background/inactive tab can't feed a huge dt into the integrator.
       const dt = Math.min((time - last) / 1000, 1 / 30)
@@ -84,7 +93,7 @@ export function useSpring(
 
       frame.current = requestAnimationFrame(tick)
     },
-    [stiffness, damping, mass, restThreshold, stop],
+    [stop],
   )
 
   const setTarget = useCallback(

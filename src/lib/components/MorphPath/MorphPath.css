@@ -1,14 +1,34 @@
+/* Fixed size, matching the pill's own resting footprint (duplicated below)
+   — this is what the flex stack actually sees as MorphPath's layout slot,
+   so Container/Liquid's own spacing never has to know or care that the
+   pill inside is absolutely positioned and can shrink independently. */
+.ax-morph-path-slot {
+  position: relative;
+  width: 200px;
+  height: 71px;
+}
+
+@media (max-width: 640px) {
+  .ax-morph-path-slot {
+    /* Matches .ax-morph-path.morph-button's own mobile width/height below. */
+    width: 150px;
+    height: 54px;
+  }
+}
+
 .ax-morph-path {
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  /* No `gap` here — the icon/label spacing lives entirely on the label's
-     own margin-left instead (see .ax-morph-path__label), because that
-     margin needs to tween to 0 in lockstep with the label's own width as
-     it morphs; a flex `gap` can't be interpolated the same way (it still
-     reserves its full value between two adjacent flex items even once one
-     has shrunk to zero width). */
+  /* Anchored to the slot's own top-right corner (position: absolute is set
+     inline, not here — see MorphPath.tsx for why) and never moves: as the
+     pill's own width shrinks toward the circle, only its *left* edge moves
+     inward. The glyph sits right up against this right edge (see
+     justify-content, also inline), so its screen position stays fixed
+     throughout the whole morph regardless of direction — nothing about it
+     is computed from the label's current size at all anymore. */
+  top: 0;
+  right: 0;
   overflow: hidden;
   /* width/border-radius are driven per-frame from JS (see applyT in
      MorphPath.tsx) as it morphs from the resting pill to a circle — this
@@ -18,6 +38,16 @@
      min-width is a hard floor on the *used* width regardless of source —
      it also blocked the JS-driven inline width from ever shrinking past it
      during the morph, breaking the circle entirely. */
+  /* Unlike transform/opacity, animating width and border-radius isn't
+     GPU-compositable — the browser has to re-rasterize the shape's actual
+     geometry every frame, which can show as a faint shimmer right at the
+     rounded corners (where the curve's own geometry changes fastest per
+     pixel) even though the underlying width/radius values themselves are
+     verified perfectly smooth (sampled every ~15ms with no jumps). This
+     hints the browser to allocate this element its own compositing layer
+     ahead of time rather than re-promoting it mid-animation, which is
+     usually where that kind of rasterization jank comes from. */
+  will-change: width, border-radius;
 }
 
 /* Two classes (this one plus the consumer's own, e.g. .morph-button) beats
@@ -57,7 +87,9 @@
      morph (see MorphPath.tsx) — this is only the resting/initial paint,
      same reasoning as .ax-morph-path.morph-button's own width comment. */
   max-width: 300px;
-  margin-left: 6px;
+  /* Gap to the glyph lives on the *right* — the label comes first, the
+     anchored glyph comes last (see MorphPath.tsx's component doc comment). */
+  margin-right: 6px;
   /* A direct declaration here always overrides the inherited value from
      the consumer's own className (e.g. .morph-button's 0.02em) regardless
      of stylesheet order — inheritance has no specificity to contest a
