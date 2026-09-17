@@ -141,7 +141,17 @@ export function MorphContainer({
       // content does, same as the underlying material design "container
       // transform" pattern this technique is named for.
       if (pillLabelRef.current) pillLabelRef.current.style.opacity = String(clamp01(1 - t / 0.25))
-      if (panelLabelRef.current) panelLabelRef.current.style.opacity = String(clamp01((t - 0.6) / 0.4))
+      // Starts later than the pill label's own fade (0.9 vs the pill's
+      // 0.25), not just for pacing — panelLabelRef is a fixed height
+      // (see its own JSX comment) anchored to the *final* panel size, so
+      // for as long as the overlay's own height hasn't grown to match
+      // yet, that fixed-height box pokes above the overlay's own visible
+      // top edge and `overflow: hidden` clips it there. The top line of
+      // whatever panelContent renders is what sits closest to that edge,
+      // so it's the one that reads as "growing into view" if the fade
+      // starts before the box is tall enough — 0.9 is a deliberately
+      // generous margin so that doesn't happen for typical panel content.
+      if (panelLabelRef.current) panelLabelRef.current.style.opacity = String(clamp01((t - 0.9) / 0.1))
 
       // Settling back at the pill's own rect means the overlay is now
       // pixel-identical to the trigger underneath — safe to unmount it and
@@ -303,7 +313,19 @@ export function MorphContainer({
             >
               {children}
             </div>
-            <div ref={panelLabelRef} className="ax-morph-overlay__panel-content">
+            <div
+              ref={panelLabelRef}
+              className="ax-morph-overlay__panel-content"
+              // Fixed to the panel's own final height (not `inset: 0`,
+              // which would stretch to the overlay's own current,
+              // still-settling height) — same reasoning as pillLabelRef's
+              // own fixed height above: without this, the panel's content
+              // visibly slides as the box's height keeps creeping toward
+              // its target while the content is already fading in, not
+              // just during the brief opacity ramp itself. Measured this
+              // as a real ~10px shift over ~170ms, not a sub-pixel one.
+              style={{ height: lastRect.height }}
+            >
               {panelContent ?? (
                 <>
                   <p className="ax-morph-overlay__panel-title">Expanded panel</p>

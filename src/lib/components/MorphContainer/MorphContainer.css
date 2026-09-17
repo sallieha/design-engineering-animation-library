@@ -64,9 +64,18 @@
   pointer-events: none;
 }
 
+/* Bottom-anchored with a fixed height (set inline from the panel's own
+   final height — see MorphContainer.tsx), not `inset: 0` — the overlay's
+   own height is still settling for a noticeable stretch even after this
+   content starts becoming visible, and stretching to fill it would
+   recenter the text within whatever that current (still-changing)
+   height is on every frame. Same fix as .ax-morph-overlay__pill-label's
+   own fixed height, applied to the other end of the morph. */
 .ax-morph-overlay__panel-content {
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
