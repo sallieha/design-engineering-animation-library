@@ -8,7 +8,7 @@
 .ax-morph-merge {
   position: relative;
   display: flex;
-  gap: 8px;
+  gap: 13px;
   width: max-content;
 }
 
@@ -63,7 +63,7 @@
 
 @media (max-width: 640px) {
   .ax-morph-merge {
-    gap: 6px;
+    gap: 11px;
   }
 
   .ax-morph-merge__pill {

@@ -31,6 +31,17 @@
   /* top/left/width/height/border-radius are driven per-frame from JS (see
      applyT in MorphContainer.tsx) — this is only the initial paint before
      the first spring tick lands. */
+  /* Unlike transform/opacity, animating width/height/border-radius isn't
+     GPU-compositable — the browser has to re-rasterize the actual shape
+     every frame, which can show as a faint shimmer or "pop" right at the
+     rounded corners as the animation settles, even though the underlying
+     JS-computed values themselves are smooth to well under a pixel (see
+     MorphPath's own identical width/border-radius animation, which hit
+     the same thing). Hints the browser to allocate this element its own
+     compositing layer ahead of time instead of re-promoting it mid-
+     animation, which is usually where that kind of rasterization jank
+     comes from. */
+  will-change: top, left, width, height, border-radius;
 }
 
 /* Bottom-anchored with a fixed height (set inline from the trigger's own
