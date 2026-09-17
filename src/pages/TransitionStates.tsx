@@ -1,4 +1,4 @@
-import { MorphBlob, MorphContainer, MorphPath } from '../lib'
+import { MorphContainer, MorphMerge, MorphPath } from '../lib'
 import './TransitionStates.css'
 
 /**
@@ -7,9 +7,13 @@ import './TransitionStates.css'
  * onClick handling rather than a scripted `active` prop, matching the
  * cursor-driven convention the other two pages already use.
  *
- * All three demos share the same base pill (same size, same .glass
- * treatment, same resting radius) so the only variable on display is the
- * morph technique itself — a controlled study, not three unrelated demos.
+ * Container Morph and Morph Path share the same base pill (same size,
+ * same .glass treatment, same resting radius) so the only variable on
+ * display between them is the morph technique itself. Merge/Split is a
+ * two-pill demo by nature (it has nothing to morph a single pill's shape
+ * against) but keeps the same .glass material and overall footprint
+ * (200px / 71px, split across two pills instead of one) for visual
+ * parity with the other two.
  */
 function TransitionStates() {
   return (
@@ -17,19 +21,14 @@ function TransitionStates() {
       <div className="playground__stack">
         <MorphContainer
           className="morph-button morph-container-button glass"
-          panelContent={
-            <>
-              <p className="ax-morph-overlay__panel-title">Container Morph</p>
-              <p className="ax-morph-overlay__panel-subtitle">One element, new bounds — click to collapse</p>
-            </>
-          }
+          panelContent={<p className="ax-morph-overlay__panel-subtitle">One element, new bounds — click to collapse</p>}
         >
           Container Morph
         </MorphContainer>
 
         <MorphPath className="morph-button glass">Morph Path</MorphPath>
 
-        <MorphBlob className="morph-button glass">Liquid</MorphBlob>
+        <MorphMerge className="glass" />
       </div>
     </div>
   )

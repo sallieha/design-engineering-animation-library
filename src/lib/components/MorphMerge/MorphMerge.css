@@ -1,0 +1,141 @@
+/* `max-content`, not a fixed 200px — .playground__stack (the demo's own
+   parent) has a fixed width, and a flex item's own `width: auto` gets
+   clamped to whatever space its container actually has rather than its
+   content's preferred size (the same reason Container Morph's own label
+   needed `max-content` instead of `auto` — see TransitionStates.css). Two
+   generously-padded text pills need more than 200px to read comfortably;
+   `max-content` lets them have it regardless of the stack's own width. */
+.ax-morph-merge {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  width: max-content;
+  /* Nudged left of center within .playground__stack (which centers this
+     wider-than-200px group via align-items). The merge/split geometry in
+     MorphMerge.tsx is all measured fresh from the pills' own rects via
+     getBoundingClientRect, which already reflects this transform, so no
+     code changes are needed there for the offset to carry through. */
+  transform: translateX(-7px);
+}
+
+.ax-morph-merge__pill {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 71px;
+  padding: 0 30px;
+  border-radius: 35.5px;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* The result state reads as a different *kind* of control (an icon-only
+   circle button) rather than the same wide text pill with its label
+   swapped for a small icon — width pinned to match height rather than
+   inheriting the text pill's own padding-driven width. */
+.ax-morph-merge__pill--circle {
+  width: 71px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+/* Same seamless-swap technique as MorphContainer/MorphBlob: the overlay
+   starts pixel-identical to these two resting pills, so hiding them the
+   instant it mounts (and revealing them once it unmounts, back at that
+   same "apart" look) causes no visible pop. */
+.ax-morph-merge__pill[data-hidden='true'] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .ax-morph-merge {
+    gap: 6px;
+  }
+
+  .ax-morph-merge__pill {
+    height: 54px;
+    padding: 0 22px;
+    border-radius: 27px;
+    font-size: 12px;
+  }
+
+  .ax-morph-merge__pill--circle {
+    width: 54px;
+    padding: 0;
+  }
+}
+
+/* No text inside this layer's shapes — see .ax-morph-merge-overlay__shape
+   below for why they're plain glass pills rather than anything fancier.
+   Each shape is its own fixed-position element (not sized/clipped to a
+   shared parent box) since the pair only ever needs to move within the
+   space already spanned by the two resting pills. */
+.ax-morph-merge-overlay__shapes {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  pointer-events: none;
+}
+
+/* Plain `.glass` (applied via className in MorphMerge.tsx, same as the
+   resting pills) — an earlier version tried an SVG goo filter here for a
+   softer organic fuse, but `backdrop-filter` silently fails to render
+   under an ancestor's own SVG `filter`, which made these shapes fully
+   invisible while merging/held. Full glass material won out over that
+   effect — see the component doc comment. */
+.ax-morph-merge-overlay__shape {
+  will-change: top, left, width, height, border-radius, transform;
+}
+
+/* A gentle breathing scale while fully merged, applied only during the
+   hold (see MorphMerge.tsx) — both shapes run it in lockstep so they
+   stay pixel-identical to each other throughout, not just at rest. */
+@keyframes ax-morph-merge-pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.015);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Unfiltered layer, positioned identically to the shapes underneath —
+   see the component doc comment for why content lives here instead of
+   inside the filtered group. */
+.ax-morph-merge-overlay__content {
+  position: fixed;
+  inset: 0;
+  z-index: 1201;
+  pointer-events: none;
+}
+
+.ax-morph-merge-overlay__label {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  user-select: none;
+  will-change: opacity, transform;
+}
+
+@media (max-width: 640px) {
+  .ax-morph-merge-overlay__label {
+    font-size: 12px;
+  }
+}

@@ -31,5 +31,8 @@ export type { MorphPathProps } from './components/MorphPath'
 export { MorphBlob } from './components/MorphBlob'
 export type { MorphBlobProps } from './components/MorphBlob'
 
+export { MorphMerge } from './components/MorphMerge'
+export type { MorphMergeProps } from './components/MorphMerge'
+
 export { useSpring } from './physics/useSpring'
 export type { SpringConfig, SpringVector } from './physics/useSpring'
