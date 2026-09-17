@@ -38,7 +38,17 @@ interface Rect {
   height: number
 }
 
-const DEFAULT_SPRING: SpringConfig = { stiffness: 210, damping: 26, mass: 1 }
+// restThreshold looser than useSpring's own default (0.01) — this spring
+// drives every dimension (top/left/width/height/border-radius) from a
+// single 0-1 value, and near the very end of its decay the *rate* of
+// change drops so low that it spends a disproportionate stretch of real
+// time (measured: ~150ms, a quarter of the whole close) crawling through
+// well under a pixel of actual movement before finally crossing the
+// default threshold and snapping to the exact target. That reads as the
+// shape "hanging" right as it finishes, not as a position jump. A looser
+// threshold calls it done sooner — the residual left at snap time is
+// still sub-pixel, just no longer preceded by a long, visually flat tail.
+const DEFAULT_SPRING: SpringConfig = { stiffness: 210, damping: 26, mass: 1, restThreshold: 0.025 }
 
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value))
