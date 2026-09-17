@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type HTMLAttributes,
@@ -115,11 +116,46 @@ export function MorphContainer({
   const firstRectRef = useRef<Rect | null>(null)
   const lastRectRef = useRef<Rect | null>(null)
   const directionRef = useRef<'opening' | 'closing'>('opening')
+  // How far `t` needs to get before the overlay is tall enough to show
+  // panelLabelRef's own content without `overflow: hidden` clipping its
+  // top edge (see panelLabelRef's own fixed-height comment for why that
+  // risk exists at all). Measured from the actual rendered content once
+  // per open, rather than a constant tuned to one specific panelContent
+  // — a consumer's own custom panelContent can be taller or shorter than
+  // the default, and a fixed guess would either clip theirs or delay the
+  // default's fade further than it needs.
+  const panelContentSafeTRef = useRef(0.6)
 
   useEffect(() => {
     firstRectRef.current = firstRect
     lastRectRef.current = lastRect
   }, [firstRect, lastRect])
+
+  useLayoutEffect(() => {
+    if (!mounted) return
+    // Reads the `firstRect`/`lastRect` *state* directly (available via
+    // closure for this render) rather than firstRectRef/lastRectRef —
+    // those refs are only synced by the plain useEffect above, and all
+    // layout effects for a commit run before any plain effect does, so
+    // the refs could still hold the previous render's (or null) values
+    // here.
+    const panelEl = panelLabelRef.current
+    const first = firstRect
+    const last = lastRect
+    const topmost = panelEl?.firstElementChild
+    if (!panelEl || !first || !last || !topmost) return
+    // panelLabelRef's own bottom is stable throughout (bottom-anchored,
+    // fixed height — see its own comment), so measuring "how far up from
+    // that bottom the content's own top sits" gives the exact overlay
+    // height needed to reveal it, independent of the overlay's current
+    // (possibly still much shorter) height at the moment this measures.
+    const neededFromBottom = panelEl.getBoundingClientRect().bottom - topmost.getBoundingClientRect().top
+    const range = last.height - first.height
+    const rawSafeT = range !== 0 ? (neededFromBottom - first.height) / range : 0
+    // Small margin on top of the exact value, since this is a one-time
+    // measurement rather than a per-frame guarantee.
+    panelContentSafeTRef.current = clamp01(rawSafeT + 0.05)
+  }, [mounted, firstRect, lastRect])
 
   const applyT = useCallback(
     (value: { x: number }) => {
@@ -141,17 +177,20 @@ export function MorphContainer({
       // content does, same as the underlying material design "container
       // transform" pattern this technique is named for.
       if (pillLabelRef.current) pillLabelRef.current.style.opacity = String(clamp01(1 - t / 0.25))
-      // Starts later than the pill label's own fade (0.9 vs the pill's
-      // 0.25), not just for pacing — panelLabelRef is a fixed height
-      // (see its own JSX comment) anchored to the *final* panel size, so
-      // for as long as the overlay's own height hasn't grown to match
-      // yet, that fixed-height box pokes above the overlay's own visible
-      // top edge and `overflow: hidden` clips it there. The top line of
-      // whatever panelContent renders is what sits closest to that edge,
-      // so it's the one that reads as "growing into view" if the fade
-      // starts before the box is tall enough — 0.9 is a deliberately
-      // generous margin so that doesn't happen for typical panel content.
-      if (panelLabelRef.current) panelLabelRef.current.style.opacity = String(clamp01((t - 0.9) / 0.1))
+      // Starts later than the pill label's own fade (0.25) — panelLabelRef
+      // is a fixed height (see its own JSX comment) anchored to the
+      // *final* panel size, so for as long as the overlay's own height
+      // hasn't grown to match yet, that fixed-height box pokes above the
+      // overlay's own visible top edge and `overflow: hidden` clips it
+      // there. panelContentSafeTRef is measured from the actual rendered
+      // content (see above) rather than a guessed constant, so this
+      // starts as early as it safely can for whatever panelContent this
+      // consumer passed — not later than necessary, which would make the
+      // reveal feel like a sudden late pop instead of a gradual fade.
+      const safeT = panelContentSafeTRef.current
+      if (panelLabelRef.current) {
+        panelLabelRef.current.style.opacity = String(clamp01((t - safeT) / (1 - safeT || 1)))
+      }
 
       // Settling back at the pill's own rect means the overlay is now
       // pixel-identical to the trigger underneath — safe to unmount it and
