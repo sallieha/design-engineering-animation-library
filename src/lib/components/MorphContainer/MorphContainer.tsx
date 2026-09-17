@@ -1,7 +1,6 @@
 import {
   useCallback,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
   type HTMLAttributes,
@@ -50,12 +49,6 @@ interface Rect {
 // threshold calls it done sooner — the residual left at snap time is
 // still sub-pixel, just no longer preceded by a long, visually flat tail.
 const DEFAULT_SPRING: SpringConfig = { stiffness: 210, damping: 26, mass: 1, restThreshold: 0.025 }
-
-// Floor for when the panel's own content is allowed to start revealing
-// while opening — see its own usage in applyT for why "as soon as it
-// won't clip" (the other half of that calculation) still isn't late
-// enough on its own.
-const MIN_CONTENT_REVEAL_T = 0.85
 
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value))
@@ -118,50 +111,28 @@ export function MorphContainer({
   const [mounted, setMounted] = useState(false)
   const [firstRect, setFirstRect] = useState<Rect | null>(null)
   const [lastRect, setLastRect] = useState<Rect | null>(null)
+  // Whether the box has *fully, discretely* finished opening — not "far
+  // enough along that t crossed some fraction". Earlier attempts tied the
+  // panel content's own reveal to a fraction of the spring's own `t`
+  // (first "not clipped", then "not clipped and the box is mostly still"),
+  // and each one still left *some* residual overlap between the box
+  // visibly finishing its resize and the content becoming visible, which
+  // read as everything jumping together even when each half measured
+  // smooth on its own. This flips true only once, on the exact frame the
+  // box reaches its true final size (see applyT), fully decoupling the
+  // content's own reveal (a real CSS transition, see its own className)
+  // from the box's still-in-progress motion — there's no fraction of `t`
+  // left to mistune.
+  const [boxSettled, setBoxSettled] = useState(false)
 
   const firstRectRef = useRef<Rect | null>(null)
   const lastRectRef = useRef<Rect | null>(null)
   const directionRef = useRef<'opening' | 'closing'>('opening')
-  // How far `t` needs to get before the overlay is tall enough to show
-  // panelLabelRef's own content without `overflow: hidden` clipping its
-  // top edge (see panelLabelRef's own fixed-height comment for why that
-  // risk exists at all). Measured from the actual rendered content once
-  // per open, rather than a constant tuned to one specific panelContent
-  // — a consumer's own custom panelContent can be taller or shorter than
-  // the default, and a fixed guess would either clip theirs or delay the
-  // default's fade further than it needs.
-  const panelContentSafeTRef = useRef(0.6)
 
   useEffect(() => {
     firstRectRef.current = firstRect
     lastRectRef.current = lastRect
   }, [firstRect, lastRect])
-
-  useLayoutEffect(() => {
-    if (!mounted) return
-    // Reads the `firstRect`/`lastRect` *state* directly (available via
-    // closure for this render) rather than firstRectRef/lastRectRef —
-    // those refs are only synced by the plain useEffect above, and all
-    // layout effects for a commit run before any plain effect does, so
-    // the refs could still hold the previous render's (or null) values
-    // here.
-    const panelEl = panelLabelRef.current
-    const first = firstRect
-    const last = lastRect
-    const topmost = panelEl?.firstElementChild
-    if (!panelEl || !first || !last || !topmost) return
-    // panelLabelRef's own bottom is stable throughout (bottom-anchored,
-    // fixed height — see its own comment), so measuring "how far up from
-    // that bottom the content's own top sits" gives the exact overlay
-    // height needed to reveal it, independent of the overlay's current
-    // (possibly still much shorter) height at the moment this measures.
-    const neededFromBottom = panelEl.getBoundingClientRect().bottom - topmost.getBoundingClientRect().top
-    const range = last.height - first.height
-    const rawSafeT = range !== 0 ? (neededFromBottom - first.height) / range : 0
-    // Small margin on top of the exact value, since this is a one-time
-    // measurement rather than a per-frame guarantee.
-    panelContentSafeTRef.current = clamp01(rawSafeT + 0.05)
-  }, [mounted, firstRect, lastRect])
 
   const applyT = useCallback(
     (value: { x: number }) => {
@@ -178,31 +149,18 @@ export function MorphContainer({
         overlay.style.borderRadius = `${radius + (panelRadius - radius) * t}px`
       }
 
-      // Crossfades the pill's own label out and the panel's content in —
-      // the container itself never pops between two looks, only this inner
-      // content does, same as the underlying material design "container
-      // transform" pattern this technique is named for.
+      // Crossfades the pill's own label out — the container itself never
+      // pops between two looks, only this inner content does, same as the
+      // underlying material design "container transform" pattern this
+      // technique is named for. The panel's own content doesn't crossfade
+      // against `t` at all (see boxSettled above and its own CSS
+      // transition on panelLabelRef) — every attempt at tuning *when*
+      // within the box's motion it was safe to start still left some
+      // overlap between "box visibly moving" and "content becoming
+      // visible" that read as a jump, so it waits for the motion to be
+      // fully, discretely over instead.
       if (pillLabelRef.current) pillLabelRef.current.style.opacity = String(clamp01(1 - t / 0.25))
-      // Starts later than the pill label's own fade (0.25) — panelLabelRef
-      // is a fixed height (see its own JSX comment) anchored to the
-      // *final* panel size, so for as long as the overlay's own height
-      // hasn't grown to match yet, that fixed-height box pokes above the
-      // overlay's own visible top edge and `overflow: hidden` clips it
-      // there; panelContentSafeTRef (measured from the actual rendered
-      // content, see above) is the earliest point that's safe from that.
-      // But "safe from clipping" alone isn't late enough on its own — the
-      // overlay is still visibly, rapidly resizing at that point (nowhere
-      // near settled), and content fading in *while* the box is still
-      // obviously animating read as everything jumping at once, even
-      // though the box's own motion and the content's own position were
-      // each independently smooth. MIN_CONTENT_REVEAL_T pushes the start
-      // out further, to where the box's own motion is nearly imperceptible,
-      // so there's no longer any visible overlap between "box still
-      // moving" and "content becoming visible" to read as chaotic.
-      const safeT = Math.max(panelContentSafeTRef.current, MIN_CONTENT_REVEAL_T)
-      if (panelLabelRef.current) {
-        panelLabelRef.current.style.opacity = String(clamp01((t - safeT) / (1 - safeT || 1)))
-      }
+      if (t >= 1 && directionRef.current === 'opening') setBoxSettled(true)
 
       // Settling back at the pill's own rect means the overlay is now
       // pixel-identical to the trigger underneath — safe to unmount it and
@@ -259,6 +217,7 @@ export function MorphContainer({
     })
     directionRef.current = 'opening'
     setMounted(true)
+    setBoxSettled(false)
     // One frame's delay so the overlay paints at the pill's own rect (t=0)
     // before the spring starts pulling it toward the panel — otherwise the
     // very first frame could be scheduled before firstRect/lastRect commit.
@@ -267,6 +226,11 @@ export function MorphContainer({
 
   const close = useCallback(() => {
     directionRef.current = 'closing'
+    // Content starts fading back out the instant closing begins, not
+    // tied to the spring's own `t` — same reasoning as the opening side,
+    // just simpler here since "closing has started" is already a clean,
+    // discrete event with no fraction of `t` to pick.
+    setBoxSettled(false)
     setTarget({ x: 0, y: 0 })
   }, [setTarget])
 
@@ -375,7 +339,16 @@ export function MorphContainer({
               // its target while the content is already fading in, not
               // just during the brief opacity ramp itself. Measured this
               // as a real ~10px shift over ~170ms, not a sub-pixel one.
-              style={{ height: lastRect.height }}
+              //
+              // Opacity is driven by boxSettled (a real CSS transition,
+              // see .ax-morph-overlay__panel-content), not by `t` — see
+              // boxSettled's own doc comment for why any t-fraction-based
+              // reveal still left visible overlap with the box's motion.
+              style={{
+                height: lastRect.height,
+                opacity: boxSettled ? 1 : 0,
+                pointerEvents: boxSettled ? 'auto' : 'none',
+              }}
             >
               {panelContent ?? (
                 <>
