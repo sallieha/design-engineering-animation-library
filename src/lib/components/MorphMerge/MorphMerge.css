@@ -10,24 +10,27 @@
   display: flex;
   gap: 8px;
   width: max-content;
-  /* Nudged left of center within .playground__stack (which centers this
-     wider-than-200px group via align-items). The merge/split geometry in
-     MorphMerge.tsx is all measured fresh from the pills' own rects via
-     getBoundingClientRect, which already reflects this transform, so no
-     code changes are needed there for the offset to carry through. */
-  transform: translateX(-7px);
 }
 
+/* min-width, not just padding — "Organic" and "Merge" are different
+   lengths, so left to their own content width the two pills come out
+   different widths too. That's harmless on its own, but it also means
+   the *gap* between them (the visual seam a viewer's eye actually uses
+   as "center", especially since that's where the merge happens) sits
+   off from the group's true bounding-box center, toward whichever pill
+   is narrower. Matching both pills to the wider one's own width keeps
+   the gap sitting exactly at true center regardless of label length. */
 .ax-morph-merge__pill {
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   height: 71px;
+  min-width: 142px;
   padding: 0 30px;
   border-radius: 35.5px;
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 400;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -38,9 +41,13 @@
 /* The result state reads as a different *kind* of control (an icon-only
    circle button) rather than the same wide text pill with its label
    swapped for a small icon — width pinned to match height rather than
-   inheriting the text pill's own padding-driven width. */
+   inheriting the text pill's own padding-driven width. min-width: 0
+   overrides the base rule's own min-width (there to equalize the two
+   *text* pills' widths — see .ax-morph-merge__pill) which would
+   otherwise stop this circle from ever shrinking below it. */
 .ax-morph-merge__pill--circle {
   width: 71px;
+  min-width: 0;
   padding: 0;
   border-radius: 50%;
 }
@@ -61,6 +68,7 @@
 
   .ax-morph-merge__pill {
     height: 54px;
+    min-width: 96px;
     padding: 0 22px;
     border-radius: 27px;
     font-size: 12px;
@@ -126,7 +134,7 @@
   justify-content: center;
   color: #ffffff;
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 400;
   letter-spacing: 0.02em;
   text-transform: uppercase;

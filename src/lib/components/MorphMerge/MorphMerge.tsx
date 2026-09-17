@@ -11,6 +11,10 @@ export interface MorphMergeProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
   leftResult?: ReactNode
   /** Right pill's content once split back apart (defaults to a left-facing arrow). */
   rightResult?: ReactNode
+  /** Shows the result content (icons) first instead of the labels — the
+   * first click then merges/splits back to the labels, rather than to
+   * the results. */
+  startRevealed?: boolean
   /** Gap between the two resting pills, in px — defaults to the CSS
    * value (8px desktop, 6px mobile) when omitted, since an inline style
    * would otherwise permanently override the mobile breakpoint's own
@@ -100,6 +104,7 @@ export function MorphMerge({
   rightLabel = 'Merge',
   leftResult = <RightArrow />,
   rightResult = <LeftArrow />,
+  startRevealed = false,
   gap,
   mergeDuration = 360,
   holdDuration = 150,
@@ -115,7 +120,7 @@ export function MorphMerge({
 
   const [mounted, setMounted] = useState(false)
   const [phase, setPhase] = useState<Phase>('apart')
-  const [revealed, setRevealed] = useState(false)
+  const [revealed, setRevealed] = useState(startRevealed)
   const [rects, setRects] = useState<{ left: Rect; right: Rect; merged: Rect } | null>(null)
   // The pills the *split* lands on — text pills and result circles are
   // different sizes, so the split can't just reverse the same rects the

@@ -83,6 +83,19 @@
 
 .ax-morph-overlay .ax-morph-overlay__panel-subtitle {
   margin: 0;
+  /* The overlay reuses the consumer's own className for visual parity
+     with the resting pill (see MorphContainer.tsx) — which for this demo
+     includes .morph-container-button's own `white-space: nowrap` (added
+     so "Container Morph" stays on one line at rest). That property
+     inherits straight down into this text, blocking wrapping entirely
+     regardless of max-width, so it has to be reset back explicitly here. */
+  white-space: normal;
+  /* Narrower than the panel's own available width on purpose, so this
+     sentence wraps to two lines instead of one — more compact panel.
+     Tuned to this specific sentence: comfortably fits "One element, new
+     bounds" on the first line without also fitting "—", so it doesn't
+     collapse to one line or wrap to three. */
+  max-width: 180px;
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-size: 13px;
   font-weight: 400;

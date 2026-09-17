@@ -33,17 +33,20 @@ export const CODE_SNIPPETS: Record<string, string> = {
   Pulse
 </Pulse>`,
 
-  '/transition-states': `<MorphContainer className="morph-button glass">
-  Container
+  '/transition-states': `<MorphContainer
+  className="morph-button morph-container-button glass"
+  panelWidth={240}
+  panelHeight={140}
+  panelContent={<p className="ax-morph-overlay__panel-subtitle">One element, new bounds — click to collapse</p>}
+>
+  Container Morph
 </MorphContainer>
 
 <MorphPath className="morph-button glass">
   Morph Path
 </MorphPath>
 
-<MorphBlob className="morph-button glass">
-  Liquid
-</MorphBlob>`,
+<MorphMerge className="glass" startRevealed />`,
 }
 
 export const DEFAULT_SNIPPET = '// Coming soon'

@@ -21,6 +21,8 @@ function TransitionStates() {
       <div className="playground__stack">
         <MorphContainer
           className="morph-button morph-container-button glass"
+          panelWidth={240}
+          panelHeight={140}
           panelContent={<p className="ax-morph-overlay__panel-subtitle">One element, new bounds — click to collapse</p>}
         >
           Container Morph
@@ -28,7 +30,7 @@ function TransitionStates() {
 
         <MorphPath className="morph-button glass">Morph Path</MorphPath>
 
-        <MorphMerge className="glass" />
+        <MorphMerge className="glass" startRevealed />
       </div>
     </div>
   )
