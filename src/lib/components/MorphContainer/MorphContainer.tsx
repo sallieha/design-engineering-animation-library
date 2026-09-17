@@ -51,6 +51,12 @@ interface Rect {
 // still sub-pixel, just no longer preceded by a long, visually flat tail.
 const DEFAULT_SPRING: SpringConfig = { stiffness: 210, damping: 26, mass: 1, restThreshold: 0.025 }
 
+// Floor for when the panel's own content is allowed to start revealing
+// while opening — see its own usage in applyT for why "as soon as it
+// won't clip" (the other half of that calculation) still isn't late
+// enough on its own.
+const MIN_CONTENT_REVEAL_T = 0.85
+
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value))
 }
@@ -182,12 +188,18 @@ export function MorphContainer({
       // *final* panel size, so for as long as the overlay's own height
       // hasn't grown to match yet, that fixed-height box pokes above the
       // overlay's own visible top edge and `overflow: hidden` clips it
-      // there. panelContentSafeTRef is measured from the actual rendered
-      // content (see above) rather than a guessed constant, so this
-      // starts as early as it safely can for whatever panelContent this
-      // consumer passed — not later than necessary, which would make the
-      // reveal feel like a sudden late pop instead of a gradual fade.
-      const safeT = panelContentSafeTRef.current
+      // there; panelContentSafeTRef (measured from the actual rendered
+      // content, see above) is the earliest point that's safe from that.
+      // But "safe from clipping" alone isn't late enough on its own — the
+      // overlay is still visibly, rapidly resizing at that point (nowhere
+      // near settled), and content fading in *while* the box is still
+      // obviously animating read as everything jumping at once, even
+      // though the box's own motion and the content's own position were
+      // each independently smooth. MIN_CONTENT_REVEAL_T pushes the start
+      // out further, to where the box's own motion is nearly imperceptible,
+      // so there's no longer any visible overlap between "box still
+      // moving" and "content becoming visible" to read as chaotic.
+      const safeT = Math.max(panelContentSafeTRef.current, MIN_CONTENT_REVEAL_T)
       if (panelLabelRef.current) {
         panelLabelRef.current.style.opacity = String(clamp01((t - safeT) / (1 - safeT || 1)))
       }
