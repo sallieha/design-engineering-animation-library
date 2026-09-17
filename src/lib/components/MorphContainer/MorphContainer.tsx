@@ -145,8 +145,25 @@ export function MorphContainer({
 
       // Settling back at the pill's own rect means the overlay is now
       // pixel-identical to the trigger underneath — safe to unmount it and
-      // reveal the real button with no visible seam.
-      if (t <= 0.001 && directionRef.current === 'closing') setMounted(false)
+      // reveal the real button with no visible seam. Forces the *exact*
+      // first rect here rather than trusting this frame's own `t` to have
+      // already interpolated all the way there — `t` only ever approaches
+      // 0 asymptotically (this threshold is deliberately loose, so it
+      // doesn't spend a long stretch of real time crawling through an
+      // imperceptible remaining distance first), and a sub-pixel gap left
+      // between the overlay's actual last position and the trigger's own
+      // exact position reads as a small downward pop at the handoff —
+      // this removes that gap outright instead of just shrinking it.
+      if (t <= 0.02 && directionRef.current === 'closing') {
+        if (overlay && first) {
+          overlay.style.top = `${first.top}px`
+          overlay.style.left = `${first.left}px`
+          overlay.style.width = `${first.width}px`
+          overlay.style.height = `${first.height}px`
+          overlay.style.borderRadius = `${radius}px`
+        }
+        setMounted(false)
+      }
     },
     [radius, panelRadius],
   )
