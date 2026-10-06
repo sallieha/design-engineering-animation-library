@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
+import { GooeySurface } from '../../lib'
 import CodeIcon from './CodeIcon'
 import { CODE_SNIPPETS, DEFAULT_SNIPPET } from './codeSnippets'
 import './CodeToggle.css'
@@ -57,25 +58,31 @@ function CodeToggle() {
       <div className="code-toggle-backdrop" data-open={open} aria-hidden="true" />
 
       <div className="code-toggle" ref={rootRef} data-open={open}>
-        {/* position:absolute (anchored to .code-toggle, sized to just the
-           button) rather than a flex child — same fix SiteMenu's dropdown
-           needed so the panel's own footprint can't drag the button's
-           centering off target. */}
-        <div className="code-toggle__panel glass" aria-hidden={!open}>
+        <GooeySurface
+          open={open}
+          direction="up"
+          align="center"
+          triggerSize={32}
+          gap={14}
+          panelRadius={20}
+          contentClassName="code-toggle__panel"
+          contentProps={{ 'aria-hidden': !open }}
+          trigger={
+            <button
+              type="button"
+              className="code-toggle__button"
+              onClick={() => setOpen((o) => !o)}
+              aria-label="Toggle code view"
+              aria-expanded={open}
+            >
+              <CodeIcon />
+            </button>
+          }
+        >
           <pre className="code-toggle__code">
             <code>{code}</code>
           </pre>
-        </div>
-
-        <button
-          type="button"
-          className="code-toggle__button glass"
-          onClick={() => setOpen((o) => !o)}
-          aria-label="Toggle code view"
-          aria-expanded={open}
-        >
-          <CodeIcon />
-        </button>
+        </GooeySurface>
       </div>
     </>
   )

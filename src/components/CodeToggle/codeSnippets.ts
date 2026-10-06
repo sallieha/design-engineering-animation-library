@@ -47,6 +47,27 @@ export const CODE_SNIPPETS: Record<string, string> = {
 </MorphPath>
 
 <MorphMerge className="glass" startRevealed />`,
+
+  '/layout-reflow-states': `<GooeyMenu
+  rows={[
+    { label: 'GOOEY MENU', value: 'v1.0.0', variant: 'muted' },
+    { label: 'Springs', value: '12', variant: 'badge' },
+    { label: 'Route', value: 'Static' },
+  ]}
+/>
+
+<GooeyToggle aria-label="Toggle" />
+
+<GooeyTooltipBar
+  placement="bottom"
+  items={[
+    { icon: <CommentIcon />, label: 'Comments' },
+    { icon: <InboxIcon />, label: 'Inbox', dot: true },
+    { icon: <PreviewIcon />, label: 'Preview' },
+    { icon: <ShareIcon />, label: 'Share' },
+    { icon: <MenuIcon />, label: 'Menu', dot: true },
+  ]}
+/>`,
 }
 
 export const DEFAULT_SNIPPET = '// Coming soon'

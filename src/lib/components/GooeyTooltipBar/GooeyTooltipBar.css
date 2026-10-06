@@ -1,0 +1,108 @@
+.ax-gooey-tips {
+  position: relative;
+  display: inline-block;
+}
+
+/* The pill and the tooltip bubble are both drawn in this one filtered SVG
+   (see GooeyTooltipBar.tsx); left/top/width/height are inline. */
+.ax-gooey-tips__art {
+  position: absolute;
+  z-index: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.ax-gooey-tips__bar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 48px;
+  padding: 0 6px;
+}
+
+.ax-gooey-tips__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ax-gooey-tips__item:hover,
+.ax-gooey-tips__item:focus-visible {
+  background: rgba(255, 255, 255, 0.14);
+  outline: none;
+}
+
+.ax-gooey-tips__dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4da3ff;
+}
+
+/* Left/top/width are driven per-frame from JS to match the bubble exactly;
+   clips the label so a stale one is cut off rather than overflowing. Fades
+   in on a short delay so it doesn't show on a bubble still climbing out of
+   the pill, and out immediately. */
+.ax-gooey-tips__label-box {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  top: 0;
+  width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 90ms ease-out;
+}
+
+.ax-gooey-tips__label-box[data-visible='true'] {
+  opacity: 1;
+  transition: opacity 140ms ease-out 140ms;
+}
+
+.ax-gooey-tips__label {
+  flex: none;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+/* Off-screen copy of every label, only here to read each one's natural width. */
+.ax-gooey-tips__measure {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.ax-gooey-tips__measure > span {
+  display: inline-block;
+}

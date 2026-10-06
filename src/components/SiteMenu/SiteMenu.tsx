@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import { GooeySurface } from '../../lib'
 import LiquidGlassIcon from './LiquidGlassIcon'
 import './SiteMenu.css'
 
 const PAGES = [
   { to: '/', label: '1.0 Hover States' },
-  { to: '/click-press-states', label: '2.0 Click/Press States' },
-  { to: '/transition-states', label: '3.0 Morph/Shape-shift Transition' },
+  { to: '/click-press-states', label: '2.0 Click & Press States' },
+  { to: '/transition-states', label: '3.0 Morph & Shape-shift Transition' },
+  { to: '/layout-reflow-states', label: '4.0 Gooey Menu & Tooltips' },
 ]
 
 /**
@@ -56,17 +58,27 @@ function SiteMenu() {
       <div className="site-menu-backdrop" data-open={open} aria-hidden="true" />
 
       <div className="site-menu" ref={rootRef} data-open={open}>
-        <button
-          type="button"
-          className="site-menu__toggle glass"
-          onClick={() => setOpen((o) => !o)}
-          aria-label="Toggle site menu"
-          aria-expanded={open}
+        <GooeySurface
+          open={open}
+          direction="down"
+          align="center"
+          triggerSize={32}
+          gap={14}
+          panelRadius={20}
+          contentClassName="site-menu__dropdown"
+          contentProps={{ 'aria-hidden': !open }}
+          trigger={
+            <button
+              type="button"
+              className="site-menu__toggle"
+              onClick={() => setOpen((o) => !o)}
+              aria-label="Toggle site menu"
+              aria-expanded={open}
+            >
+              <LiquidGlassIcon />
+            </button>
+          }
         >
-          <LiquidGlassIcon />
-        </button>
-
-        <nav className="site-menu__dropdown glass" aria-hidden={!open}>
           {PAGES.map((page) => (
             <NavLink
               key={page.to}
@@ -79,7 +91,7 @@ function SiteMenu() {
               {page.label}
             </NavLink>
           ))}
-        </nav>
+        </GooeySurface>
       </div>
     </>
   )

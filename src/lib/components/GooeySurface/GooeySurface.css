@@ -1,0 +1,53 @@
+.ax-gooey-surface {
+  position: relative;
+}
+
+/* Both fused shapes live in this one filtered SVG (see GooeySurface.tsx);
+   left/top/width/height are inline. */
+.ax-gooey-surface__shapes {
+  position: absolute;
+  z-index: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* Position/size/radius are driven per-frame from JS. Transparent — the
+   visible material is the SVG underneath; this only clips the content. */
+.ax-gooey-surface__panel {
+  position: absolute;
+  z-index: 3;
+  overflow: hidden;
+  will-change: left, top, width, height, border-radius;
+}
+
+/* The content's natural size becomes the panel's size (measured), so it's
+   taken out of flow at max-content and anchored to the panel's far edge. */
+.ax-gooey-surface__content {
+  position: absolute;
+  box-sizing: border-box;
+  width: max-content;
+}
+
+.ax-gooey-surface__content[data-direction='up'] {
+  top: 0;
+}
+
+.ax-gooey-surface__content[data-direction='down'] {
+  bottom: 0;
+}
+
+.ax-gooey-surface__content[data-align='start'] {
+  left: 0;
+}
+
+.ax-gooey-surface__content[data-align='center'] {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.ax-gooey-surface__trigger {
+  position: relative;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+}

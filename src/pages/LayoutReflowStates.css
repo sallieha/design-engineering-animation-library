@@ -1,0 +1,35 @@
+.gooey-playground {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+/* The background's spiral motif is centered ~20px above the viewport's own
+   midpoint (measured from the motif's bounding box), and the toggle is the
+   component that sits on it — everything else is stacked around it with
+   20px gaps: the toggle is 52px tall, so its top edge is 51px above the page midpoint
+   point and its bottom edge 6px below it. */
+.gooey-playground__toggle {
+  position: absolute;
+  left: 50%;
+  top: calc(50% - 51px);
+  transform: translateX(-50%);
+}
+
+/* The menu's trigger (58px) ends 20px above the toggle: its center is the
+   page's midpoint (this wrapper centers it) nudged up 100px. */
+.gooey-playground > .ax-gooey-menu {
+  transform: translateY(-100px);
+}
+
+/* The toolbar starts 20px below the toggle. Its tooltip bubble opens
+   downward, so nothing needs reserving above it. */
+.gooey-playground__tips {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 21px);
+  transform: translateX(-50%);
+}

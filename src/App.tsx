@@ -4,6 +4,7 @@ import CodeToggle from './components/CodeToggle'
 import HoverStates from './pages/HoverStates'
 import ClickPressStates from './pages/ClickPressStates'
 import TransitionStates from './pages/TransitionStates'
+import LayoutReflowStates from './pages/LayoutReflowStates'
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/" element={<HoverStates />} />
         <Route path="/click-press-states" element={<ClickPressStates />} />
         <Route path="/transition-states" element={<TransitionStates />} />
+        <Route path="/layout-reflow-states" element={<LayoutReflowStates />} />
       </Routes>
     </>
   )

@@ -34,5 +34,17 @@ export type { MorphBlobProps } from './components/MorphBlob'
 export { MorphMerge } from './components/MorphMerge'
 export type { MorphMergeProps } from './components/MorphMerge'
 
+export { GooeySurface } from './components/GooeySurface'
+export type { GooeySurfaceProps } from './components/GooeySurface'
+
+export { GooeyMenu } from './components/GooeyMenu'
+export type { GooeyMenuProps, GooeyMenuRow } from './components/GooeyMenu'
+
+export { GooeyToggle } from './components/GooeyToggle'
+export type { GooeyToggleProps } from './components/GooeyToggle'
+
+export { GooeyTooltipBar } from './components/GooeyTooltipBar'
+export type { GooeyTooltipBarProps, GooeyTooltipBarItem } from './components/GooeyTooltipBar'
+
 export { useSpring } from './physics/useSpring'
 export type { SpringConfig, SpringVector } from './physics/useSpring'

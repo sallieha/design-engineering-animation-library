@@ -1,0 +1,23 @@
+.ax-gooey-toggle {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ax-gooey-toggle:focus,
+.ax-gooey-toggle:focus-visible {
+  outline: none;
+}
+
+/* The whole look (track, tint, liquid knob) is drawn in this one SVG, which
+   overflows the button's own box to leave room for the shadow. */
+.ax-gooey-toggle__art {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+}

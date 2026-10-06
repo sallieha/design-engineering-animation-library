@@ -11,7 +11,7 @@
  */
 function CodeIcon() {
   return (
-    <svg width="20.5" height="16" viewBox="-0.5 1.33325 21.668 17.33335" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="18.5" height="14.44" viewBox="-0.5 1.33325 21.668 17.33335" fill="none" xmlns="http://www.w3.org/2000/svg">
       {/* Left chevron nudged 0.5px further left (was 5.75/0.75/5.75) — viewBox widened by the same 0.5px on the left edge to give it room instead of clipping. */}
       <path d="M5.25 5.41675L0.25 10.5968L5.25 15.4167" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       {/* Right chevron nudged 1px further right (was 14.418/19.418/14.418) — viewBox widened by the same 1px on the right edge to give it room instead of clipping. */}
