@@ -46,5 +46,8 @@ export type { GooeyToggleProps } from './components/GooeyToggle'
 export { GooeyTooltipBar } from './components/GooeyTooltipBar'
 export type { GooeyTooltipBarProps, GooeyTooltipBarItem } from './components/GooeyTooltipBar'
 
+export { CardExpand } from './components/CardExpand'
+export type { CardExpandProps, CardExpandItem } from './components/CardExpand'
+
 export { useSpring } from './physics/useSpring'
 export type { SpringConfig, SpringVector } from './physics/useSpring'

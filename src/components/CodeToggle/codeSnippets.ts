@@ -68,6 +68,15 @@ export const CODE_SNIPPETS: Record<string, string> = {
     { icon: <MenuIcon />, label: 'Menu', dot: true },
   ]}
 />`,
+
+  '/card-expand': `<CardExpand
+  cards={[
+    { id: 'artifacts', title: 'Artifacts', subtitle: '24 Items', icon: <ArtifactsIcon /> },
+    { id: 'projects', title: 'Projects', subtitle: '6 Active', icon: <ProjectsIcon /> },
+    { id: 'scheduled', title: 'Scheduled', subtitle: '3 Upcoming', icon: <ScheduledIcon /> },
+    { id: 'design', title: 'Design', subtitle: '8 Canvases', icon: <DesignIcon /> },
+  ]}
+/>`,
 }
 
 export const DEFAULT_SNIPPET = '// Coming soon'

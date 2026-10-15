@@ -29,9 +29,9 @@
   min-width: 142px;
   padding: 0 30px;
   border-radius: 35.5px;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: var(--ax-font-mono);
   font-size: 17px;
-  font-weight: 400;
+  font-weight: 300;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -133,9 +133,9 @@
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: var(--ax-font-mono);
   font-size: 17px;
-  font-weight: 400;
+  font-weight: 300;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   user-select: none;

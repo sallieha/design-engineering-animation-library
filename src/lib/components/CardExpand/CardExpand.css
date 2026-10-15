@@ -1,0 +1,154 @@
+.ax-card-expand {
+  position: relative;
+}
+
+/* The glass itself is drawn in this shared SVG behind the cards (see
+   CardExpand.tsx); each card only carries content on top of it. */
+.ax-card-expand__glass {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* left/top/width/height are driven per-frame from JS (see Card in
+   CardExpand.tsx); the inline values are only the first paint. */
+.ax-card {
+  position: absolute;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: 24px;
+  cursor: pointer;
+  color: #ffffff;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  user-select: none;
+  will-change: left, top, width, height;
+}
+
+.ax-card__icon {
+  position: absolute;
+  top: 13px;
+  left: 14px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Fixed corners at a constant size: nothing here rescales or reflows while
+   the card itself is resizing. */
+.ax-card__more {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  transition: opacity 120ms ease-out, background-color 150ms ease;
+}
+
+.ax-card__more:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Same corner button in both states: the arrow points to the top right to
+   expand, and turns to point at the bottom left once the card is open —
+   toward where it's about to shrink to — and collapses it. */
+.ax-card__more svg {
+  transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ax-card[data-expanded='true'] .ax-card__more svg {
+  transform: rotate(180deg);
+}
+
+.ax-card__text {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+/* Same face as the "GOOEY MENU" header row on 4.0 (see
+   .ax-gooey-menu__row[data-variant='muted'] in GooeyMenu.css): the system
+   monospace, regular weight, 13px, in capitals. 13px rather than the
+   subtitle-adjacent 15px so the longest names ("SCHEDULED", "ARTIFACTS")
+   still fit the narrow tucked cards. */
+.ax-card__title {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.ax-card__subtitle {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Both controls fade together; positions are fixed corners of the card, so
+   they ride its edges as it opens rather than being laid out. */
+.ax-card__actions {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The container covers the whole card (including the corner arrow), so only
+   the buttons themselves take clicks. */
+.ax-card[data-expanded='true'] .ax-card__primary,
+.ax-card[data-expanded='true'] .ax-card__secondary {
+  pointer-events: auto;
+}
+
+/* Copy Link stacks directly above Customize in the bottom-right corner:
+   Customize's own 12px inset + its 32px height + a 10px gap. */
+.ax-card__primary {
+  position: absolute;
+  bottom: 54px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.ax-card__secondary {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  height: 32px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.ax-card__secondary:hover {
+  background: rgba(255, 255, 255, 0.32);
+}

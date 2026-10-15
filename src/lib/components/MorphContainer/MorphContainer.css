@@ -98,11 +98,11 @@
    regardless of stylesheet import order. */
 .ax-morph-overlay .ax-morph-overlay__panel-title {
   margin: 0;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: var(--ax-font-mono);
   font-size: 19px;
-  font-weight: 400;
+  font-weight: 300;
   letter-spacing: 0.01em;
-  text-transform: none;
+  text-transform: uppercase;
   color: #ffffff;
 }
 
@@ -117,14 +117,16 @@
   white-space: normal;
   /* Narrower than the panel's own available width on purpose, so this
      sentence wraps to two lines instead of one — more compact panel.
-     Tuned to this specific sentence: comfortably fits "One element, new
-     bounds" on the first line without also fitting "—", so it doesn't
-     collapse to one line or wrap to three. */
-  max-width: 180px;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+     Tuned to this specific sentence in the monospace capitals it's set in
+     (about 7.9px per character at this size): "ONE ELEMENT, NEW BOUNDS" is
+     ~183px, and adding " —" would make it ~198px, so anything between
+     fits the first line without also fitting "—" — it neither collapses to
+     one line nor wraps to three. */
+  max-width: 190px;
+  font-family: var(--ax-font-mono);
   font-size: 13px;
-  font-weight: 400;
+  font-weight: 300;
   letter-spacing: 0.01em;
-  text-transform: none;
+  text-transform: uppercase;
   color: rgba(255, 255, 255, 0.6);
 }

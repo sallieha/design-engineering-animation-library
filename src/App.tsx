@@ -4,6 +4,7 @@ import CodeToggle from './components/CodeToggle'
 import HoverStates from './pages/HoverStates'
 import ClickPressStates from './pages/ClickPressStates'
 import TransitionStates from './pages/TransitionStates'
+import CardExpandPage from './pages/CardExpandPage'
 import LayoutReflowStates from './pages/LayoutReflowStates'
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
         <Route path="/click-press-states" element={<ClickPressStates />} />
         <Route path="/transition-states" element={<TransitionStates />} />
         <Route path="/layout-reflow-states" element={<LayoutReflowStates />} />
+        <Route path="/card-expand" element={<CardExpandPage />} />
       </Routes>
     </>
   )

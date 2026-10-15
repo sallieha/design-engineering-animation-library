@@ -119,6 +119,12 @@
   padding: 10px;
 }
 
+.site-menu__divider {
+  height: 1px;
+  margin: 6px 16px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
 .site-menu__item {
   display: block;
   /* Vertical padding cut 5px top/bottom (10px total) to sit tighter

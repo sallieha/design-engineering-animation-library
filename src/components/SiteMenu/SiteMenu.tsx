@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { GooeySurface } from '../../lib'
 import LiquidGlassIcon from './LiquidGlassIcon'
@@ -9,6 +9,8 @@ const PAGES = [
   { to: '/click-press-states', label: '2.0 Click & Press States' },
   { to: '/transition-states', label: '3.0 Morph & Shape-shift Transition' },
   { to: '/layout-reflow-states', label: '4.0 Gooey Menu & Tooltips' },
+  // A divider is drawn before this one — it starts a new series.
+  { to: '/card-expand', label: '5.0 Cards Expand & Collapse', startsSeries: true },
 ]
 
 /**
@@ -80,16 +82,18 @@ function SiteMenu() {
           }
         >
           {PAGES.map((page) => (
-            <NavLink
-              key={page.to}
-              to={page.to}
-              end
-              className={({ isActive }) => 'site-menu__item' + (isActive ? ' site-menu__item--active' : '')}
-              onClick={() => setOpen(false)}
-              tabIndex={open ? 0 : -1}
-            >
-              {page.label}
-            </NavLink>
+            <Fragment key={page.to}>
+              {page.startsSeries && <div className="site-menu__divider" role="separator" />}
+              <NavLink
+                to={page.to}
+                end
+                className={({ isActive }) => 'site-menu__item' + (isActive ? ' site-menu__item--active' : '')}
+                onClick={() => setOpen(false)}
+                tabIndex={open ? 0 : -1}
+              >
+                {page.label}
+              </NavLink>
+            </Fragment>
           ))}
         </GooeySurface>
       </div>

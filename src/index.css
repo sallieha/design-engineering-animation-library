@@ -1,4 +1,9 @@
 :root {
+  /* The monospace face used by the "GOOEY MENU" header row on 4.0; the
+     button labels on 1.0-3.0 use it too, at weight 300 — SF Mono's regular
+     is noticeably heavier than Helvetica Neue's. (Where only Menlo is
+     available, 300 falls back to its regular.) */
+  --ax-font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
   --bg: #0a0a0c;
   --surface: rgba(255, 255, 255, 0.035);
   --surface-border: rgba(255, 255, 255, 0.09);
@@ -168,7 +173,7 @@ body {
      applies when there's an actual gap to overlap into. */
   --gap-base: calc((100vw - min(100vw, 100vh * 1109 / 908)) / 2);
   width: calc(var(--gap-base) + min(3px, var(--gap-base) * 10000));
-  background-image: url('/bg-grid.png');
+  background-image: var(--bg-base-image, url('/bg-grid.png'));
   background-size: min(100vw, 100vh * 1109 / 908) 100%;
   background-repeat: no-repeat;
   image-rendering: pixelated;
@@ -225,12 +230,12 @@ body {
 }
 
 .bg-gap--left::after {
-  background-image: url('/bg-lines-top-left.svg?v=8');
+  background-image: var(--bg-lines-top-left-image, url('/bg-lines-top-left.svg?v=8'));
   background-position: left center;
 }
 
 .bg-gap--right::after {
-  background-image: url('/bg-lines-top-right.svg?v=8');
+  background-image: var(--bg-lines-top-right-image, url('/bg-lines-top-right.svg?v=8'));
   background-position: right center;
 }
 
@@ -263,7 +268,7 @@ body {
      into. */
   --gap-base: calc((100vh - min(100vh, 100vw * 908 / 1109)) / 2);
   height: calc(var(--gap-base) + min(3px, var(--gap-base) * 10000));
-  background-image: url('/bg-grid.png');
+  background-image: var(--bg-base-image, url('/bg-grid.png'));
   background-size: 100% min(100vh, 100vw * 908 / 1109);
   background-repeat: no-repeat;
   image-rendering: pixelated;
@@ -305,9 +310,9 @@ body {
 
 .bg-gap-v--top::after {
   background-image:
-    url('/bg-lines-vertical.svg?v=8'),
-    url('/bg-lines-top-left.svg?v=8'),
-    url('/bg-lines-top-right.svg?v=8');
+    var(--bg-lines-vertical-image, url('/bg-lines-vertical.svg?v=8')),
+    var(--bg-lines-top-left-image, url('/bg-lines-top-left.svg?v=8')),
+    var(--bg-lines-top-right-image, url('/bg-lines-top-right.svg?v=8'));
   background-size:
     calc(min(100vh, 100vw * 908 / 1109) * 792 / 908) min(100vh, 100vw * 908 / 1109),
     100% min(100vh, 100vw * 908 / 1109),
@@ -316,7 +321,7 @@ body {
 }
 
 .bg-gap-v--bottom::after {
-  background-image: url('/bg-lines-vertical.svg?v=8');
+  background-image: var(--bg-lines-vertical-image, url('/bg-lines-vertical.svg?v=8'));
   background-size: calc(min(100vh, 100vw * 908 / 1109) * 792 / 908) min(100vh, 100vw * 908 / 1109);
   background-position: center bottom;
 }
@@ -336,13 +341,36 @@ body {
   overflow: hidden;
   pointer-events: none;
   background-color: #05070f;
-  background-image: url('/bg-grid.png');
+  background-image: var(--bg-base-image, url('/bg-grid.png'));
   background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
+}
+
+/* Per-page background variants: swap the base glow image everywhere
+   .bg-gap/.bg-gap-v/#bg-frame reference --bg-base-image, without touching
+   the line-art layers on top (the original orange-red unless a variant
+   overrides the --bg-lines-*-image variables, as 5.0 does). Each
+   page sets its variant as an attribute on <body> for as long as it's
+   mounted. 5.0 gets its own copy of the original image (bg-grid-5.png) so
+   its blue can be tuned freely without touching pages 1.0-4.0, which keep
+   using bg-grid.png. */
+body[data-bg-variant='five'] {
+  --bg-base-image: url('/bg-grid-5.png?v=2');
+  /* 5.0's line art in blue (#315CF7 for the brightest shade), baked from the
+     originals by scripts/recolor-lines.mjs. Same ?v= cache-busting as the
+     originals — bump it when re-baking. */
+  --bg-lines-vertical-image: url('/bg-lines-vertical-5.svg?v=2');
+  --bg-lines-center-image: url('/bg-lines-center-5.svg?v=2');
+  --bg-lines-top-left-image: url('/bg-lines-top-left-5.svg?v=2');
+  --bg-lines-top-right-image: url('/bg-lines-top-right-5.svg?v=2');
+}
+
+body[data-bg-variant='blue'] {
+  --bg-base-image: url('/bg-grid.png');
 }
 
 /* Decorative corner-ray layers stacked on top of the base image, one per
@@ -379,7 +407,7 @@ body {
      so editing it in place doesn't change its URL and the browser can keep
      serving an old decode of it across reloads. Bump the version whenever
      this file's pixels change. */
-  background-image: url('/bg-lines-vertical.svg?v=8');
+  background-image: var(--bg-lines-vertical-image, url('/bg-lines-vertical.svg?v=8'));
   /* Narrower than the frame (792 vs 1109, same height) — scale by height
      only so the lines stay perfectly vertical instead of skewing. */
   background-size: auto 100%;
@@ -391,7 +419,7 @@ body {
      so editing it in place doesn't change its URL and the browser can keep
      serving an old decode of it across reloads. Bump the version whenever
      this file's pixels change. */
-  background-image: url('/bg-lines-center.svg?v=12');
+  background-image: var(--bg-lines-center-image, url('/bg-lines-center.svg?v=12'));
   opacity: 0.9;
   /* The 40.8deg clockwise rotation (20deg, +20deg, +10.8deg, -25deg, +25deg,
      then -10deg) used to live here as a CSS `rotate()` — removed and baked
@@ -420,10 +448,10 @@ body {
 
 .bg-layer--lines-top-left {
   /* Cache-busted (see .bg-layer--lines-vertical above for why). */
-  background-image: url('/bg-lines-top-left.svg?v=8');
+  background-image: var(--bg-lines-top-left-image, url('/bg-lines-top-left.svg?v=8'));
 }
 
 .bg-layer--lines-top-right {
   /* Cache-busted (see .bg-layer--lines-vertical above for why). */
-  background-image: url('/bg-lines-top-right.svg?v=8');
+  background-image: var(--bg-lines-top-right-image, url('/bg-lines-top-right.svg?v=8'));
 }

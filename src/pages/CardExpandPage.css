@@ -1,0 +1,14 @@
+.card-expand-playground {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+/* The background's spiral motif is centered ~20px above the viewport's own
+   midpoint (measured from the motif's bounding box), so the stage is nudged
+   up to sit on it. */
+.card-expand-playground > .ax-card-expand {
+  transform: translateY(-20px);
+}
