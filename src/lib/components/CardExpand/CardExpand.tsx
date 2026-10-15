@@ -38,7 +38,7 @@ interface Rect {
   h: number
 }
 
-const DEFAULT_SPRING: SpringConfig = { stiffness: 600, damping: 46, mass: 1 }
+const DEFAULT_SPRING: SpringConfig = { stiffness: 450, damping: 40, mass: 1 }
 // A card counts as landed once it's within this many px of its target on
 // every edge/dimension — it's then placed exactly there and its action
 // controls are revealed. A spring's tail is exponential: the last pixel or
@@ -49,7 +49,7 @@ const LAND_WITHIN_PX = 0.3
 // is within this many px of done. They're anchored to the card's own
 // corners, so from here they just ride the last few px of an already
 // decelerating move rather than sitting on a box that's still travelling.
-const REVEAL_WITHIN_PX = 6
+const REVEAL_WITHIN_PX = 12
 const ACTIONS_FADE_MS = 110
 // If a card somehow never reports landing (e.g. its target equals where it
 // already is), its controls still appear after this long, in ms.
