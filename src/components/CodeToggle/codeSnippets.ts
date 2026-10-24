@@ -77,6 +77,17 @@ export const CODE_SNIPPETS: Record<string, string> = {
     { id: 'design', title: 'Design', subtitle: '8 Canvases', icon: <DesignIcon /> },
   ]}
 />`,
+
+  '/card-cycle': `<CardCycle
+  cards={[
+    { id: 'helmet', src: '/cards/helmet.jpg', alt: 'Porsche Design helmet', focus: { x: 50, y: 50, zoom: 1 } },
+    { id: 'skier', src: '/cards/skier.jpg', alt: 'Glowing skier on red', focus: { x: 54, y: 50, zoom: 1 } },
+    { id: 'seat', src: '/cards/seat.jpg', alt: 'Tufted leather car seat', focus: { x: 60, y: 50, zoom: 1 } },
+    { id: 'aquarium', src: '/cards/aquarium.jpg', alt: 'Aquarium poster', focus: { x: 50, y: 50, zoom: 1 } },
+    { id: 'facade', src: '/cards/facade.jpg', alt: 'Perforated metal facade', focus: { x: 50, y: 50, zoom: 1 } },
+    { id: 'hancock', src: '/cards/hancock.jpg', alt: 'Herbie Hancock poster', focus: { x: 50, y: 50, zoom: 1 } },
+  ]}
+/>`,
 }
 
 export const DEFAULT_SNIPPET = '// Coming soon'

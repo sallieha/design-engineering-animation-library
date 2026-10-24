@@ -1,0 +1,13 @@
+.card-cycle-playground {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+/* The background's spiral motif is centered ~20px above the viewport's own
+   midpoint, so the block is nudged up to sit on it. */
+.card-cycle-playground > .ax-card-cycle {
+  transform: translateY(-20px);
+}

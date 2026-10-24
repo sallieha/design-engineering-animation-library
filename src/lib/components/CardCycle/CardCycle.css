@@ -1,0 +1,67 @@
+.ax-card-cycle {
+  position: relative;
+  /* The drag is the gesture here, not a scroll or a text selection. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Flat on purpose (no preserve-3d): paint order is each card's z-index, so
+   the card sent to the back can take the back slot's order at once and
+   travel there behind the others. The perspective and its origin are set
+   inline from the stack's size. */
+.ax-card-cycle__stage {
+  position: absolute;
+}
+
+/* The slot is the --t variable set inline; a finite CSS transition always
+   ends exactly on it. A drag writes `transform` directly with the
+   transition off, and clearing that hands control back to --t. */
+.ax-card-cycle__card {
+  position: absolute;
+  inset: 0;
+  transform: var(--t);
+  transition: transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.ax-card-cycle__card[data-front] {
+  cursor: grab;
+}
+
+.ax-card-cycle__card[data-front]:active {
+  cursor: grabbing;
+}
+
+/* The lit glass, in an SVG that overflows the card to leave room for its
+   shadow — so it carries the card's own 3D transform. It frames the photo,
+   which is inset inside it. */
+.ax-card-cycle__glass {
+  position: absolute;
+  left: -48px;
+  top: -48px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* The photo (inset and radius are set inline from the component's constants).
+   Zoom and crop come from each card's `focus`; clipping here keeps a zoomed
+   photo inside its rounded frame. A touch darker the further back the card
+   is, so the stack reads as depth. */
+.ax-card-cycle__photo {
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+  /* Opaque while the image is still loading, so a card never shows the ones
+     behind it through an empty frame. */
+  background: #140a1c;
+}
+
+.ax-card-cycle__photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  -webkit-user-drag: none;
+  user-select: none;
+}

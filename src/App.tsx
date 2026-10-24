@@ -5,6 +5,7 @@ import HoverStates from './pages/HoverStates'
 import ClickPressStates from './pages/ClickPressStates'
 import TransitionStates from './pages/TransitionStates'
 import CardExpandPage from './pages/CardExpandPage'
+import CardCyclePage from './pages/CardCyclePage'
 import LayoutReflowStates from './pages/LayoutReflowStates'
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
         <Route path="/transition-states" element={<TransitionStates />} />
         <Route path="/layout-reflow-states" element={<LayoutReflowStates />} />
         <Route path="/card-expand" element={<CardExpandPage />} />
+        <Route path="/card-cycle" element={<CardCyclePage />} />
       </Routes>
     </>
   )
