@@ -50,7 +50,7 @@ const CARDS = [
 ]
 
 /**
- * 6.0 — Cards Cycle & Fling: a slanted stack of photo cards in depth, each
+ * 6.0 — Cards Stack Shuffle: a slanted stack of photo cards in depth, each
  * framed in glass, where pressing or flinging the front card sends it to the
  * back and the rest step forward. Same series as 5.0, so it uses the same
  * background and line art (see index.css's `body[data-bg-variant='five']`
