@@ -12,6 +12,7 @@ const PAGES = [
   // A divider is drawn before this one — it starts a new series.
   { to: '/card-expand', label: '5.0 Cards Expand & Collapse', startsSeries: true },
   { to: '/card-cycle', label: '6.0 Cards Stack Shuffle' },
+  { to: '/chat-input', label: '7.0 Chat Input & Send' },
 ]
 
 /**

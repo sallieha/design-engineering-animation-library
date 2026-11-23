@@ -6,6 +6,7 @@ import ClickPressStates from './pages/ClickPressStates'
 import TransitionStates from './pages/TransitionStates'
 import CardExpandPage from './pages/CardExpandPage'
 import CardCyclePage from './pages/CardCyclePage'
+import ChatInputPage from './pages/ChatInputPage'
 import LayoutReflowStates from './pages/LayoutReflowStates'
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
         <Route path="/layout-reflow-states" element={<LayoutReflowStates />} />
         <Route path="/card-expand" element={<CardExpandPage />} />
         <Route path="/card-cycle" element={<CardCyclePage />} />
+        <Route path="/chat-input" element={<ChatInputPage />} />
       </Routes>
     </>
   )

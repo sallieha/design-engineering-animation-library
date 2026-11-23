@@ -88,6 +88,15 @@ export const CODE_SNIPPETS: Record<string, string> = {
     { id: 'hancock', src: '/cards/hancock.jpg', alt: 'Herbie Hancock poster', focus: { x: 50, y: 50, zoom: 1 } },
   ]}
 />`,
+
+  '/chat-input': `<ChatInput
+  placeholder="Send Message"
+  replies={[
+    'Lock in 🔥',
+    'Ha, okay, I see you. Tell me more 😄',
+    ['Wait, really? That’s kind of wild', 'Love that. Keep going 🙌'], // a double text
+  ]}
+/>`,
 }
 
 export const DEFAULT_SNIPPET = '// Coming soon'

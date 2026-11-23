@@ -52,5 +52,8 @@ export type { CardExpandProps, CardExpandItem } from './components/CardExpand'
 export { CardCycle } from './components/CardCycle'
 export type { CardCycleProps, CardCycleItem } from './components/CardCycle'
 
+export { ChatInput } from './components/ChatInput'
+export type { ChatInputProps } from './components/ChatInput'
+
 export { useSpring } from './physics/useSpring'
 export type { SpringConfig, SpringVector } from './physics/useSpring'

@@ -1,0 +1,15 @@
+.chat-input-playground {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+/* The background's spiral motif is centered ~20px above the viewport's own
+   midpoint, so the bar is nudged up to sit on it. `top`, not `transform`: a
+   transform here would become the containing block of the component's
+   viewport-fixed color wash and clip it to the bar's own box. */
+.chat-input-playground > .ax-chat {
+  top: -20px;
+}
